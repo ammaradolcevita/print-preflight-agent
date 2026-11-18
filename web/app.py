@@ -71,8 +71,6 @@ div.stButton > button {border-radius: 10px; font-weight: 600;}
 )
 
 st.markdown(
-    '<div class="brand">preflight<span>.</span></div>'
-    '<div class="tag">Unofficial prototype · not affiliated with any print shop</div>'
     '<div class="hero">Check your print file<br>before you order.</div>'
     '<div class="sub">Size, bleed, sharpness, colours, safe zone, fonts, and the text itself: typos, email and '
     "phone. In about a second, with fixes for what is safe to fix.</div>",

@@ -9,15 +9,19 @@
 
 ## The problem
 
-Online print shops check artwork, but the check is shallow or slow. On HelloPrint, according to its public pages:
+In HelloPrint's cart (NL site, checked 18 Nov 2026):
 
+- *"You can upload your files after placing your order."* The customer cannot check the file before buying.
+- The file check is a paid add-on: *"Check my files. + €7.00. Did you know that our design experts still find errors in 40% of all files?"* On a €16.79 order of 250 business cards, that is 42% on top.
+
+And on their public pages:
 - the free **basic check** is an *"automated review of your artwork's resolution, size, and color settings"*;
-- fixing problems is a **paid expert check** that *"starts only once we have received your payment"* (about 60 minutes);
+- the expert check *"starts only once we have received your payment"*;
 - *"we don't check grammar and spelling"*.
 
-A typo in an email address, or a phone number half cut off at the edge, on 500 business cards is exactly the mistake a customer notices too late.
+**If 40% of files have errors, an instant, free check before checkout is worth building.** A typo in an email address, or a phone number half cut off at the edge, on 500 business cards is exactly the mistake a customer notices too late.
 
-Sources: [artwork check](https://www.helloprint.com/en-us/artwork-check) · [how long does an artwork check take](https://www.helloprint.com/en-ie/help-centre/how-long-does-an-artwork-check-take) · [always a perfect design](https://www.helloprint.com/en-ie/always-a-perfect-design) · [how to set up a file for print](https://www.helloprint.com/en-ie/blog/how-to-set-up-a-file-for-print)
+Sources: [artwork check](https://www.helloprint.com/en-us/artwork-check) · [how long does an artwork check take](https://www.helloprint.com/en-ie/help-centre/how-long-does-an-artwork-check-take) · [always a perfect design](https://www.helloprint.com/en-ie/always-a-perfect-design) · [how to set up a file for print](https://www.helloprint.com/en-ie/blog/how-to-set-up-a-file-for-print) · cart text observed on helloprint.nl (English), 18 Nov 2026
 
 ## What it does
 
