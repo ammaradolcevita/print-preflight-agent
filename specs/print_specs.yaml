@@ -1,0 +1,111 @@
+# Print specifications used by every check.
+# Rule: no print number is hard-coded in Python. Every number lives here, with a source.
+#
+# Sources (public HelloPrint pages, checked 18 Nov 2026):
+#   [A] https://www.helloprint.com/en-ie/always-a-perfect-design
+#       "Extend your design at least 3 mm beyond the trim line", keep content at least 3 mm inside,
+#       images at least 300 dpi, CMYK.
+#   [B] https://www.helloprint.com/en-ie/blog/how-to-set-up-a-file-for-print
+#       "Small products need at least a 3 mm bleed." / banners and panels "need a 5 mm bleed or more."
+#       "Create a 5 mm margin for small print products ... and a 50 mm margin for large products."
+#       "Small products need visuals with at least 300 dpi" / large "around 72 to 150 dpi".
+#   [C] https://www.helloprint.com/en-us/artwork-check
+#       Basic check = automated review of resolution, size and colour; "we don't check grammar and spelling".
+#
+# Note: [A] says 3 mm safe margin, [B] says 5 mm for small products. We treat < 3 mm as an error
+# and 3-5 mm as a warning, and report the inconsistency.
+#
+# Thresholds marked (ours) are our own choice, not a HelloPrint number.
+
+classes:
+  small:
+    bleed_mm: 3            # [A][B]
+    safe_error_mm: 3       # [A]
+    safe_warn_mm: 5        # [B]
+    dpi_min: 300           # [A][B] below -> warning
+    dpi_error: 200         # (ours) below -> error: visibly blurry at print size
+  large:
+    bleed_mm: 5            # [B]
+    safe_error_mm: 20      # (ours)
+    safe_warn_mm: 50       # [B]
+    dpi_min: 100           # [B] "around 72 to 150"
+    dpi_error: 72          # [B] lower end
+
+tolerances:
+  size_mm: 0.5             # (ours) page size may differ this much and still match
+  aspect_rel: 0.01         # (ours) 1% aspect-ratio tolerance for "same shape, different scale"
+  dpi_rel: 0.02           # (ours) 2% slack: a 300-dpi export is often 299.8 dpi after pixel rounding
+  min_image_mm: 5          # (ours) ignore images smaller than this (tiny icons, rules)
+
+products:
+  - id: business-card
+    name: "Business cards, standard 85 x 55 mm"
+    class: small
+    trim_mm: [85, 55]
+    max_pages: 2
+    url: "https://www.helloprint.com/en-ie/standardbusinesscards"
+    keywords: ["business card", "business cards", "visitekaartje", "visitekaartjes", "visitenkarte", "name card"]
+
+  - id: flyer-a5
+    name: "Flyer A5 (148 x 210 mm)"
+    class: small
+    trim_mm: [148, 210]
+    max_pages: 2
+    url: "https://www.helloprint.com/en-ie/standardflyers"
+    keywords: ["flyer a5", "a5 flyer", "a5 flyers", "leaflet a5", "folder a5"]
+
+  - id: flyer-a6
+    name: "Flyer A6 (105 x 148 mm)"
+    class: small
+    trim_mm: [105, 148]
+    max_pages: 2
+    url: "https://www.helloprint.com/en-ie/standardflyers"
+    keywords: ["flyer a6", "a6 flyer", "a6 flyers", "small flyer"]
+
+  - id: postcard-a6
+    name: "Postcard A6 (148 x 105 mm)"
+    class: small
+    trim_mm: [148, 105]
+    max_pages: 2
+    url: "https://www.helloprint.com/en-ie/postcards"
+    keywords: ["postcard", "postcards", "ansichtkaart", "kaart a6"]
+
+  - id: poster-a3
+    name: "Poster A3 (297 x 420 mm)"
+    class: small
+    trim_mm: [297, 420]
+    max_pages: 1
+    url: "https://www.helloprint.com/en-ie/posters"
+    keywords: ["poster a3", "a3 poster", "a3 posters"]
+
+  - id: poster-a2
+    name: "Poster A2 (420 x 594 mm)"
+    class: small
+    trim_mm: [420, 594]
+    max_pages: 1
+    url: "https://www.helloprint.com/en-ie/posters"
+    keywords: ["poster a2", "a2 poster", "a2 posters", "poster"]
+
+  - id: letterhead-a4
+    name: "Letterhead A4 (210 x 297 mm)"
+    class: small
+    trim_mm: [210, 297]
+    max_pages: 1
+    url: "https://www.helloprint.com/en-ie/letterheads"
+    keywords: ["letterhead", "letterheads", "briefpapier", "a4 letter"]
+
+  - id: invitation-a6
+    name: "Invitation A6 (105 x 148 mm)"
+    class: small
+    trim_mm: [105, 148]
+    max_pages: 2
+    url: "https://www.helloprint.com/en-ie/invitations"
+    keywords: ["invitation", "invitations", "uitnodiging", "wedding invite", "invite"]
+
+  - id: rollup-85x200
+    name: "Roll-up banner 85 x 200 cm"
+    class: large
+    trim_mm: [850, 2000]
+    max_pages: 1
+    url: "https://www.helloprint.com/en-ie/rollupbanners-printing"
+    keywords: ["roll-up", "rollup", "roll up banner", "banner", "pull up banner"]
