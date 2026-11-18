@@ -44,12 +44,13 @@ def _contact_findings(token: str, pno: int, bbox) -> Finding | None:
                 NAME, "warn", f"\"{t}\" does not look like a valid email address. Please check it.",
                 {"value": t, "kind": "email"}, page=pno, bbox_mm=bbox,
             )
-    elif t.lower().startswith(("www", "http")):
-        if not URL_OK.match(t) or t.lower().startswith("www") and t.count(".") < 2:
-            return Finding(
-                NAME, "warn", f"\"{t}\" does not look like a complete web address. Please check it.",
-                {"value": t, "kind": "url"}, page=pno, bbox_mm=bbox,
-            )
+    elif t.lower().startswith(("www", "http")) and (
+        not URL_OK.match(t) or (t.lower().startswith("www") and t.count(".") < 2)
+    ):
+        return Finding(
+            NAME, "warn", f"\"{t}\" does not look like a complete web address. Please check it.",
+            {"value": t, "kind": "url"}, page=pno, bbox_mm=bbox,
+        )
     return None
 
 
@@ -59,7 +60,7 @@ def _phone_findings(text: str, pno: int, bbox) -> list[Finding]:
         raw = m.group(0).strip()
         digits = re.sub(r"\D", "", raw)
         problem = None
-        if raw.startswith("+31") or raw.startswith("0031"):
+        if raw.startswith(("+31", "0031")):
             national = digits[2:] if raw.startswith("+") else digits[4:]
             if national.startswith("0"):
                 problem = "has a 0 after +31 (write +31 6..., not +31 06...)"

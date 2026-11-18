@@ -186,3 +186,11 @@ def test_damaged_pdf(tmp_path):
 def test_unknown_product_is_clear_error(perfect):
     with pytest.raises(KeyError, match="Known products"):
         check_file(perfect, "spaceship")
+
+
+def test_partial_bleed_is_a_bleed_problem_not_a_size_problem(tmp_path):
+    """Regression: found by the evaluation set (eval/RESULTS.md)."""
+    p = make_pdf(tmp_path / "bleed1.pdf", (87, 57), background=BLUE)
+    r = check_file(p, "business-card")
+    assert sev(r, "size") == "pass"
+    assert sev(r, "bleed") == "warn"

@@ -9,9 +9,13 @@ dependencies = [
     "pymupdf>=1.24",
     "pillow>=10",
     "pyyaml>=6",
+    "rapidfuzz>=3",
+    "pyspellchecker>=0.8",
 ]
 
 [project.optional-dependencies]
+mcp = ["mcp>=2"]
+web = ["streamlit>=1.35"]
 dev = ["pytest>=8", "ruff>=0.5"]
 
 [tool.setuptools.packages.find]
@@ -22,3 +26,12 @@ testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"mcp_server/*" = ["E402"]
+"web/*" = ["E402"]
+"eval/*" = ["E402"]

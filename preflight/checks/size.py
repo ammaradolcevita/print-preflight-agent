@@ -8,7 +8,7 @@ Different shape (error): printing would crop or stretch the design.
 from __future__ import annotations
 
 from ..models import Finding
-from .base import Context, oriented, same_shape, same_size
+from .base import Context, oriented, same_shape, same_size, trim_rect_on_page
 
 NAME = "size"
 
@@ -34,7 +34,10 @@ def check(ctx: Context) -> list[Finding]:
                 out.append(Finding(NAME, "pass", "Trim size matches the product.", detail, page=pno))
                 continue
 
-        if same_size(w, h, trim) or same_size(w, h, full):
+        placed = trim_rect_on_page(page, ctx.product)
+        if same_size(w, h, trim) or same_size(w, h, full) or (placed and abs(placed[1] - 1) < 0.01):
+            # exact trim, trim + bleed, or trim centred with some (maybe too little) bleed:
+            # the size is right; the bleed check judges the amount of bleed.
             out.append(Finding(NAME, "pass", "Page size matches the product.", detail, page=pno))
         elif same_shape(w, h, trim) or same_shape(w, h, full):
             out.append(
