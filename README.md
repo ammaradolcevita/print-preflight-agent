@@ -1,4 +1,5 @@
 # 🖨️ Print Preflight Agent
+**[▶ Try the live demo](https://print-preflight.streamlit.app)**
 
 **Checks a print file before you order, in about 0.1 seconds.** It explains every problem in plain language, fixes what is safe to fix, and also works from inside an AI assistant (MCP).
 
