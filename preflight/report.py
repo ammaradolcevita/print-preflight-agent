@@ -87,3 +87,50 @@ def check_file(path: str | Path, product_id: str) -> Report:
         findings=findings,
         seconds=time.perf_counter() - start,
     )
+
+
+# Checks whose problems survive an automatic fix. Re-checking the fixed file
+# cannot see them any more (the page is now one 300-dpi image), so we carry
+# them over from the original report instead of pretending they are gone.
+NOT_FIXED_BY_AUTOFIX = ("dpi", "safezone", "text")
+
+
+def check_after_fix(original: Report, fixed_path: str | Path) -> Report:
+    fixed = check_file(fixed_path, original.product_id)
+    kept = [f for f in fixed.findings if f.check not in NOT_FIXED_BY_AUTOFIX]
+    carried = [_move_to_fixed_page(f, original, fixed_path) for f in original.findings
+               if f.check in NOT_FIXED_BY_AUTOFIX]
+    findings = kept + carried
+    return Report(
+        file=str(fixed_path),
+        product_id=original.product_id,
+        product_name=original.product_name,
+        verdict=verdict_of(findings),
+        findings=findings,
+        seconds=fixed.seconds,
+    )
+
+
+def _move_to_fixed_page(f: Finding, original: Report, fixed_path: str | Path) -> Finding:
+    """Shift a marker box from the original page to the same spot on the fixed page."""
+    if f.bbox_mm is None or f.page is None:
+        return f
+    from dataclasses import replace
+
+    from .checks.base import trim_rect_on_page
+
+    product = get_product(original.product_id)
+    try:
+        before = load(original.file, product).pages[f.page - 1]
+        after = load(fixed_path, product).pages[f.page - 1]
+    except (LoadError, IndexError):
+        return f
+    a, b = trim_rect_on_page(before, product), trim_rect_on_page(after, product)
+    if not a or not b:
+        return f
+    (ax0, ay0, _, _), sa = a
+    (bx0, by0, _, _), sb = b
+    k = sb / sa
+    x0, y0, x1, y1 = f.bbox_mm
+    moved = (bx0 + (x0 - ax0) * k, by0 + (y0 - ay0) * k, bx0 + (x1 - ax0) * k, by0 + (y1 - ay0) * k)
+    return replace(f, bbox_mm=moved)

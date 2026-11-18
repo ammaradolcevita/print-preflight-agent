@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from . import bleed, colour, dpi, pages, size
+from . import bleed, colour, dpi, fonts, pages, safezone, size, text
 from .base import Context
 
-CHECKS = [pages, size, bleed, dpi, colour]
+CHECKS = [pages, size, bleed, dpi, colour, safezone, fonts, text]
 
 __all__ = ["CHECKS", "Context"]

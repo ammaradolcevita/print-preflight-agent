@@ -14,6 +14,20 @@ from PIL import Image, ImageDraw
 
 from .specs import mm_to_pt
 
+DEFAULT_FONT = next(
+    (
+        str(p)
+        for p in (
+            Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+            Path("/System/Library/Fonts/Supplemental/Arial.ttf"),
+            Path("/Library/Fonts/Arial.ttf"),
+            Path("C:/Windows/Fonts/arial.ttf"),
+        )
+        if p.exists()
+    ),
+    None,
+)
+
 
 def _pattern(px: tuple[int, int], mode: str) -> Image.Image:
     """A simple coloured test picture with some detail."""
@@ -49,8 +63,9 @@ def make_pdf(
     """Create a PDF.
 
     images: [{"px": (w, h), "rect_mm": (x0, y0, x1, y1), "mode": "CMYK" | "RGB"}]
-    texts:  [{"text": "...", "at_mm": (x, y), "size": 9, "fontfile": None | path}]
-            without fontfile, Helvetica is used and is NOT embedded.
+    texts:  [{"text": "...", "at_mm": (x, y), "size": 9, "embed": True}]
+            embed=True uses a real TTF font (embedded); embed=False uses
+            base-14 Helvetica, which is NOT embedded.
     background: RGB 0..1 fill for the whole page, or None for white.
     """
     path = Path(path)
@@ -66,8 +81,8 @@ def make_pdf(
         for t in texts or []:
             x, y = (mm_to_pt(v) for v in t["at_mm"])
             kwargs = {"fontsize": t.get("size", 9)}
-            if t.get("fontfile"):
-                kwargs.update(fontname="embedded", fontfile=str(t["fontfile"]))
+            if t.get("embed", True) and DEFAULT_FONT:
+                kwargs.update(fontname="embedded", fontfile=DEFAULT_FONT)
             else:
                 kwargs.update(fontname="helv")
             page.insert_text(pymupdf.Point(x, y), t["text"], **kwargs)

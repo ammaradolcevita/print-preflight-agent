@@ -66,3 +66,31 @@ def content_touches_edge(img: Image.Image, white_level: int = 245, border_px: in
         gray.crop((w - border_px, 0, w, h)),
     ]
     return any(s.getextrema()[0] < white_level for s in strips)
+
+
+def trim_rect_on_page(page: Page, product: Product) -> tuple[tuple[float, float, float, float], float] | None:
+    """Where the cut line sits on this page, and the page-mm per real-mm scale.
+
+    Returns None when the page shape does not fit the product at all.
+    """
+    trim = oriented(product.trim_mm, page)
+    full = oriented(product.full_mm, page)
+    w, h = page.width_mm, page.height_mm
+    if page.trim_box_mm is not None:
+        tb = page.trim_box_mm
+        return tb, (tb[2] - tb[0]) / trim[0]
+    tol = tolerances()["size_mm"]
+    if same_size(w, h, trim):
+        return (0.0, 0.0, w, h), 1.0
+    # Page bigger than trim at real scale (full bleed, or some extra bleed): trim is centred.
+    if trim[0] - tol <= w <= trim[0] + 40 and trim[1] - tol <= h <= trim[1] + 40:
+        dx, dy = (w - trim[0]) / 2, (h - trim[1]) / 2
+        if abs(dx - dy) <= 1.0:
+            return (dx, dy, w - dx, h - dy), 1.0
+    if same_shape(w, h, trim):
+        return (0.0, 0.0, w, h), w / trim[0]
+    if same_shape(w, h, full):
+        s = w / full[0]
+        b = product.spec.bleed_mm * s
+        return (b, b, w - b, h - b), s
+    return None
