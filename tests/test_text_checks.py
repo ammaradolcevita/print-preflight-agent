@@ -108,3 +108,17 @@ def test_plus31_with_zero_is_flagged(tmp_path):
 def test_incomplete_web_address(tmp_path):
     r = check_file(card(tmp_path, [{"text": "www.studio", "at_mm": (12, 46)}]), "business-card")
     assert findings(r, "text")[0].detail["kind"] == "url"
+
+
+def test_accepted_typo_corrections_are_applied_in_the_pdf(tmp_path):
+    from preflight.samples import business_card
+    from preflight.textfix import Correction, apply_corrections
+
+    card_pdf = business_card(tmp_path / "card.pdf", mistakes=True)
+    res = apply_corrections(card_pdf, [Correction(1, "scientst", "scientist"), Correction(1, "enginer", "engineer")])
+    r = check_file(res.output, "business-card")
+    words = {f.detail.get("word") for f in findings(r, "text")}
+    assert "scientst" not in words and "enginer" not in words
+    assert len(res.changes) == 2
+    # the dark band and the logo are untouched by the redaction
+    assert any(f.check == "dpi" for f in r.findings if f.severity == "error")

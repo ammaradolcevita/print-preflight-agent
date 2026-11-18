@@ -33,7 +33,7 @@ Sources: [artwork check](https://www.helloprint.com/en-us/artwork-check) · [how
 | **colour** | RGB pictures that may print duller | ✅ convert to CMYK |
 | **safezone** | text closer than 3–5 mm to the cut line | – (designer's decision) |
 | **fonts** | fonts not embedded in the PDF | ✅ fixed by flattening |
-| **text** | **typos** (English + Dutch, names skipped), broken **email / web address / phone number** | – (only suggests) |
+| **text** | **typos** (English + Dutch, names skipped), broken **email / web address / phone number** | ✅ typos: one-click *accept*, never automatic |
 | **pages** | more pages than the product has sides | – |
 
 Every number (3 mm bleed, 300 dpi and so on) lives in [`specs/print_specs.yaml`](specs/print_specs.yaml), with the source sentence. My own thresholds are marked `(ours)`.
@@ -59,7 +59,7 @@ pip install -e ".[dev,web,mcp]"
 python -m preflight --list                                   # products
 python -m preflight my_card.pdf --product business-card      # check a file
 streamlit run web/app.py                                     # web demo (try the sample cards)
-pytest -q                                                    # 35 tests
+pytest -q                                                    # 36 tests
 python eval/make_fixtures.py && python eval/run_eval.py      # evaluation
 ```
 
@@ -100,6 +100,8 @@ file ─────► loader (PDF / PNG / JPG → one model in mm) ──► 8
 
 **Code measures, the assistant explains.** All checks are deterministic Python (PyMuPDF, Pillow), so they cannot "hallucinate" a measurement. The language model is the interface: it understands the request and talks to the customer.
 
+**Typos are suggested, never auto-corrected.** The customer ticks the corrections they want; only then the line is rewritten in the PDF (redaction + same position, size, colour and font). Contact details are never guessed.
+
 **After a fix, it does not lie.** The fixed file is a flattened 300-dpi image, so a naive re-check would report "print-ready" even with a blurry logo and a typo. Problems an automatic fix cannot solve (dpi, safe zone, text) are carried over into the after-fix report.
 
 ## Limitations (honest)
@@ -127,7 +129,7 @@ preflight/               loader, checks/, fixes, preview, matcher, report, CLI
 mcp_server/server.py     MCP tools for AI assistants
 web/app.py               Streamlit demo
 eval/                    labelled fixtures, evaluation script, RESULTS.md
-tests/                   pytest (35 tests)
+tests/                   pytest (36 tests)
 ```
 
 MIT licence · Ammar Sodikov · [linkedin.com/in/ammarsodikov](https://www.linkedin.com/in/ammarsodikov/)

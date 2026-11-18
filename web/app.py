@@ -22,6 +22,7 @@ from preflight.preview import numbered
 from preflight.report import check_after_fix, check_file
 from preflight.samples import business_card
 from preflight.specs import all_products, get_product
+from preflight.textfix import Correction, apply_corrections
 from web.interactive import interactive_html
 
 st.set_page_config(page_title="Preflight — check your print file", page_icon="◐", layout="wide")
@@ -84,6 +85,7 @@ ss = st.session_state
 ss.setdefault("path", None)
 ss.setdefault("fixed", None)
 ss.setdefault("forced_product", None)
+ss.setdefault("text_changes", None)
 
 products = all_products()
 ids = [p.id for p in products]
@@ -116,11 +118,12 @@ if upload is not None and ss.get("upload_name") != upload.name + str(upload.size
     tmp = Path(tempfile.mkdtemp()) / upload.name
     tmp.write_bytes(upload.getvalue())
     ss.path, ss.fixed, ss.upload_name, ss.forced_product = str(tmp), None, upload.name + str(upload.size), None
+    ss.text_changes = None
 if sample_bad or sample_good:
     name = "business_card_with_mistakes.pdf" if sample_bad else "business_card_print_ready.pdf"
     tmp = Path(tempfile.mkdtemp()) / name
     business_card(tmp, mistakes=sample_bad)
-    ss.path, ss.fixed, ss.forced_product = str(tmp), None, "business-card"
+    ss.path, ss.fixed, ss.forced_product, ss.text_changes = str(tmp), None, "business-card", None
     st.rerun()
 
 
@@ -140,7 +143,28 @@ if ss.path:
     pid = ss.forced_product if (ss.forced_product and not request.strip()) else product_id
     report = check_file(ss.path, pid)
     st.write("")
+    if ss.text_changes:
+        st.markdown('<div class="changes">' + "<br>".join("✓ " + html.escape(c) for c in ss.text_changes)
+                    + "</div>", unsafe_allow_html=True)
+        st.write("")
     show(report, ss.path, Path(ss.path).name)
+
+    typos = [f for f in report.findings if f.check == "text" and f.detail.get("kind") == "spelling"
+             and f.detail.get("suggestion")]
+    if typos and ss.path.lower().endswith(".pdf") and not ss.fixed:
+        st.write("")
+        with st.container(border=True):
+            st.markdown("**Suggested text corrections** · nothing changes until you accept")
+            chosen = []
+            for i, f in enumerate(typos):
+                word, sug = f.detail["word"], f.detail["suggestion"]
+                if st.checkbox(f"“{word}” → “{sug}”", value=True, key=f"typo_{i}_{word}"):
+                    chosen.append(Correction(f.page or 1, word, sug))
+            if st.button(f"Accept {len(chosen)} correction{'s' if len(chosen) != 1 else ''}", disabled=not chosen):
+                out = Path(ss.path).with_name(Path(ss.path).stem + "_corrected.pdf")
+                res = apply_corrections(ss.path, chosen, out)
+                ss.path, ss.text_changes = res.output, res.changes + res.skipped
+                st.rerun()
 
     fixable = [f for f in report.findings if f.fixable and f.severity in ("warn", "error")]
     if fixable and not ss.fixed:
