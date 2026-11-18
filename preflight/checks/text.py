@@ -36,6 +36,26 @@ def _dictionaries():
     return SpellChecker(language="en"), SpellChecker(language="nl")
 
 
+def _is_subsequence(short: str, long: str) -> bool:
+    it = iter(long)
+    return all(ch in it for ch in short)
+
+
+def _suggest(word: str, en, nl) -> str | None:
+    """Best correction. A missing letter is the most common typo ("enginer"), so
+    candidates that contain the typed letters in order win over more frequent words
+    ("engineer" beats "engine")."""
+    candidates = (en.candidates(word) or set()) | (nl.candidates(word) or set())
+    candidates.discard(word)
+    if not candidates:
+        return None
+
+    def rank(c: str):
+        return (_is_subsequence(word, c), en.word_usage_frequency(c) + nl.word_usage_frequency(c))
+
+    return max(candidates, key=rank)
+
+
 def _contact_findings(token: str, pno: int, bbox) -> Finding | None:
     t = token.strip(".,;:()[]<>\"'")
     if "@" in t:
@@ -106,7 +126,7 @@ def check(ctx: Context) -> list[Finding]:
                         continue
                     seen.add(w)
                     if en.unknown([w]) and nl.unknown([w]):
-                        suggestion = en.correction(w) or nl.correction(w)
+                        suggestion = _suggest(w, en, nl)
                         hint = f" Did you mean \"{suggestion}\"?" if suggestion and suggestion != w else ""
                         typos.append(
                             Finding(

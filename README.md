@@ -3,7 +3,7 @@
 **Checks a print file before you order, in about 0.1 seconds.** It explains every problem in plain language, fixes what is safe to fix, and also works from inside an AI assistant (MCP).
 
 ![Before and after automatic fix](docs/before_after.png)
-*Left: a business card with eight problems. Right: after the one-click fix, bleed and colours are fixed, and what needs the designer is still listed. Black = cut line · red dashed = where bleed must reach · green dashed = safe zone.*
+*Left: a business card with nine problems. Right: after the one-click fix, bleed and colours are fixed, and what needs the designer is still listed. Black = cut line · red dashed = where bleed must reach · green dashed = safe zone.*
 
 > Unofficial prototype built as a job application. Not affiliated with or endorsed by HelloPrint. It never places orders.
 
@@ -54,8 +54,8 @@ pip install -e ".[dev,web,mcp]"
 
 python -m preflight --list                                   # products
 python -m preflight my_card.pdf --product business-card      # check a file
-streamlit run web/app.py                                     # web demo (has a sample file button)
-pytest -q                                                    # 34 tests
+streamlit run web/app.py                                     # web demo (try the sample cards)
+pytest -q                                                    # 35 tests
 python eval/make_fixtures.py && python eval/run_eval.py      # evaluation
 ```
 
@@ -123,7 +123,7 @@ preflight/               loader, checks/, fixes, preview, matcher, report, CLI
 mcp_server/server.py     MCP tools for AI assistants
 web/app.py               Streamlit demo
 eval/                    labelled fixtures, evaluation script, RESULTS.md
-tests/                   pytest (34 tests)
+tests/                   pytest (35 tests)
 ```
 
 MIT licence · Ammar Sodikov · [linkedin.com/in/ammarsodikov](https://www.linkedin.com/in/ammarsodikov/)

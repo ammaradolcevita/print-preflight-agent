@@ -194,3 +194,13 @@ def test_partial_bleed_is_a_bleed_problem_not_a_size_problem(tmp_path):
     r = check_file(p, "business-card")
     assert sev(r, "size") == "pass"
     assert sev(r, "bleed") == "warn"
+
+
+def test_designed_samples(tmp_path):
+    from preflight.samples import business_card
+
+    good = check_file(business_card(tmp_path / "good.pdf", mistakes=False), "business-card")
+    assert good.verdict == "pass", good.to_markdown()
+    bad = check_file(business_card(tmp_path / "bad.pdf", mistakes=True), "business-card")
+    flagged = {f.check for f in bad.findings if f.severity in ("warn", "error")}
+    assert flagged == {"bleed", "dpi", "colour", "safezone", "fonts", "text"}

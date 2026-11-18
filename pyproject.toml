@@ -11,6 +11,7 @@ license = { text = "MIT" }
 requires-python = ">=3.11"
 dependencies = [
     "pymupdf>=1.24",
+    "pymupdf-fonts>=1.0",
     "pillow>=10",
     "pyyaml>=6",
     "rapidfuzz>=3",
