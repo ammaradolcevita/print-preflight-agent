@@ -68,6 +68,8 @@ h1, h2, h3 {letter-spacing: -0.02em;}
 .legend i {display: inline-block; width: 14px; height: 0; vertical-align: middle; margin: 0 .25rem 0 .7rem;}
 .changes {background: #F6F5F2; border-radius: 12px; padding: .8rem 1rem; font-size: .88rem; color: #374151;}
 .foot {color: #9CA3AF; font-size: .78rem; margin-top: 3rem; border-top: 1px solid #F0EFEB; padding-top: 1rem;}
+.foot a {color: #6B7280; text-decoration: none; border-bottom: 1px solid #D1D5DB;}
+.foot a:hover {color: #111827;}
 div.stButton > button {border-radius: 10px; font-weight: 600;}
 </style>
 """,
@@ -190,8 +192,8 @@ if ss.path:
                            type="primary")
 
 st.markdown(
-    '<div class="foot">Open-source prototype by Ammar Sodikov · not affiliated with any print shop · '
-    "checks are deterministic code; "
-    "numbers come from public print specifications · no orders are placed.</div>",
+    '<div class="foot">Open-source prototype by Ammar Sodikov · '
+    '<a href="https://www.linkedin.com/in/ammarsodikov/" target="_blank">LinkedIn</a> · '
+    '<a href="https://github.com/ammaradolcevita/print-preflight-agent" target="_blank">Code on GitHub</a></div>',
     unsafe_allow_html=True,
 )
