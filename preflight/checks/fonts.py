@@ -24,6 +24,12 @@ def check(ctx: Context) -> list[Finding]:
                 missing.setdefault(f.name, page.index + 1)
     if missing:
         names = ", ".join(sorted(missing))
+        # point at the first line of text set in a missing font, so the preview can show where it is
+        where = next(
+            ((page.index + 1, span.bbox_mm) for page in ctx.artwork.pages for span in page.text
+             if any(span.font.split("+")[-1].startswith(m.split("+")[-1][:12]) for m in missing)),
+            (min(missing.values()), None),
+        )
         return [
             Finding(
                 NAME,
@@ -31,7 +37,8 @@ def check(ctx: Context) -> list[Finding]:
                 f"Font(s) not embedded: {names}. The printer may swap them for another font. "
                 "Export the PDF with fonts embedded, or convert text to outlines.",
                 {"missing": sorted(missing)},
-                page=min(missing.values()),
+                page=where[0],
+                bbox_mm=where[1],
             )
         ]
     msg = f"All {len(total)} font(s) are embedded." if total else "No fonts used."

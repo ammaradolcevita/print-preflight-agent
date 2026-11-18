@@ -11,15 +11,18 @@ import tempfile
 from pathlib import Path
 
 import streamlit as st
+import streamlit.components.v1 as components
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
 
 from preflight.fixes import fix_artwork
 from preflight.matcher import find_products, parse_request
-from preflight.preview import numbered, render_preview
+from preflight.preview import numbered
 from preflight.report import check_after_fix, check_file
 from preflight.samples import business_card
 from preflight.specs import all_products, get_product
+from web.interactive import interactive_html
 
 st.set_page_config(page_title="Preflight — check your print file", page_icon="◐", layout="wide")
 
@@ -121,19 +124,6 @@ if sample_bad or sample_good:
     st.rerun()
 
 
-def issues_html(report) -> str:
-    rows = []
-    for n, f in numbered(report.findings):
-        tag = '<span class="fixtag">auto-fix</span>' if f.fixable else ""
-        rows.append(
-            f'<div class="issue"><div class="num {f.severity}">{n}</div><div>'
-            f"<b>{LABEL.get(f.check, f.check)}</b>{tag}<p>{html.escape(f.message)}</p></div></div>"
-        )
-    if not rows:
-        return '<div class="issue"><div>Nothing to fix. Every check passed.</div></div>'
-    return "".join(rows)
-
-
 def show(report, path, title):
     text, cls = VERDICT[report.verdict]
     n = len(numbered(report.findings))
@@ -142,18 +132,8 @@ def show(report, path, title):
         f"checked in {report.seconds * 1000:.0f} ms</small></div>",
         unsafe_allow_html=True,
     )
-    a, b = st.columns([11, 9], gap="large")
-    with a:
-        st.image(render_preview(path, get_product(report.product_id), report.findings, width_px=1100),
-                 use_container_width=True)
-        st.markdown(
-            '<div class="legend"><i style="border-top:2px solid #111"></i>cut line'
-            '<i style="border-top:2px dashed #D62828"></i>bleed must reach'
-            '<i style="border-top:2px dashed #1E9646"></i>safe zone</div>',
-            unsafe_allow_html=True,
-        )
-    with b:
-        st.markdown(issues_html(report), unsafe_allow_html=True)
+    doc, height = interactive_html(report, path, get_product(report.product_id))
+    components.html(doc, height=height, scrolling=False)
 
 
 if ss.path:
@@ -186,7 +166,8 @@ if ss.path:
                            type="primary")
 
 st.markdown(
-    '<div class="foot">Open-source prototype by Ammar Sodikov · checks are deterministic code; '
+    '<div class="foot">Open-source prototype by Ammar Sodikov · not affiliated with any print shop · '
+    "checks are deterministic code; "
     "numbers come from public print specifications · no orders are placed.</div>",
     unsafe_allow_html=True,
 )

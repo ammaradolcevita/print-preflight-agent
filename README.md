@@ -28,7 +28,7 @@ Sources: [artwork check](https://www.helloprint.com/en-us/artwork-check) · [how
 | Check | What it catches | Auto-fix |
 |---|---|---|
 | **size** | wrong page size or shape for the product (either orientation) | scale, if only the size differs |
-| **bleed** | no bleed or too little, when colour reaches the edge (white edges are fine) | ✅ mirror the edges outwards |
+| **bleed** | no bleed or too little, when colour reaches the edge (white edges are fine) | ✅ extend the edge colours outwards |
 | **dpi** | pictures too low-resolution *at the size they are printed* | – (needs a better image) |
 | **colour** | RGB pictures that may print duller | ✅ convert to CMYK |
 | **safezone** | text closer than 3–5 mm to the cut line | – (designer's decision) |
@@ -106,7 +106,7 @@ file ─────► loader (PDF / PNG / JPG → one model in mm) ──► 8
 
 - The evaluation files are synthetic and made by the same person who wrote the checks, so the scores are optimistic.
 - The bleed fix flattens the page to a 300-dpi image: fine for print, but text is no longer editable. The best result is still re-exporting with bleed.
-- The CMYK conversion is simple and has no ICC profile. No overprint, spot-colour or total-ink checks yet.
+- The CMYK conversion uses MuPDF's colour management but not the printer's own ICC profile (e.g. FOGRA39). No overprint, spot-colour or total-ink checks yet.
 - Colour is checked on pictures only, not on vector shapes.
 - Text inside pictures is not read (no OCR yet).
 - Spell-check: English and Dutch only, and capitalised words (names) are skipped.

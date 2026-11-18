@@ -2,9 +2,10 @@
 
 How it works, in plain words:
 1. Render each page at 300 dpi and cut out the trimmed area (the part that ends up on paper).
-2. Bleed: grow the picture by mirroring its outer edges outwards. Mirroring
-   continues backgrounds and gradients naturally, so the cut never shows a white line.
-3. Colour: convert the pixels from RGB (screen) to CMYK (print).
+2. Bleed: grow the picture by stretching its outermost pixels outwards. Only the edge
+   colour is continued, so the cut never shows a white line and no text is copied.
+3. Colour: convert the pixels from RGB (screen) to CMYK (print) with MuPDF's colour
+   management, so dark brand colours keep their look.
 4. Size: the result is always placed at exactly trim + bleed for this product,
    which also scales a design that has the right shape but the wrong size.
 
@@ -23,13 +24,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import pymupdf
-from PIL import Image, ImageOps
+from PIL import Image
 
 from .checks.base import oriented, trim_rect_on_page
 from .loader import load, render_page_rgb
 from .specs import get_product, mm_to_pt
 
 RENDER_DPI = 300
+EDGE_INSET_PX = 3
 
 
 @dataclass
@@ -39,24 +41,25 @@ class FixResult:
     skipped: list[str] = field(default_factory=list)
 
 
-def _mirror_extend(img: Image.Image, pad_x: int, pad_y: int) -> Image.Image:
-    """Grow an image by pad pixels on each side by mirroring its edges."""
+def _stretch_edges(img: Image.Image, pad_x: int, pad_y: int) -> Image.Image:
+    """Grow an image by pad pixels on each side by stretching its outermost pixel row/column.
+
+    Only the colour at the very edge is continued, so text or logos near the edge are
+    never copied into the bleed (mirroring did that: a phone number showed up upside down).
+    """
     w, h = img.size
+    k = min(EDGE_INSET_PX, w // 4, h // 4)  # sample slightly inside: the outermost row is often anti-aliased
     out = Image.new(img.mode, (w + 2 * pad_x, h + 2 * pad_y))
     out.paste(img, (pad_x, pad_y))
-    flip_x = ImageOps.mirror(img)
-    flip_y = ImageOps.flip(img)
-    flip_xy = ImageOps.flip(flip_x)
-    # sides
-    out.paste(flip_x.crop((w - pad_x, 0, w, h)), (0, pad_y))
-    out.paste(flip_x.crop((0, 0, pad_x, h)), (pad_x + w, pad_y))
-    out.paste(flip_y.crop((0, h - pad_y, w, h)), (pad_x, 0))
-    out.paste(flip_y.crop((0, 0, w, pad_y)), (pad_x, pad_y + h))
-    # corners
-    out.paste(flip_xy.crop((w - pad_x, h - pad_y, w, h)), (0, 0))
-    out.paste(flip_xy.crop((0, h - pad_y, pad_x, h)), (pad_x + w, 0))
-    out.paste(flip_xy.crop((w - pad_x, 0, w, pad_y)), (0, pad_y + h))
-    out.paste(flip_xy.crop((0, 0, pad_x, pad_y)), (pad_x + w, pad_y + h))
+    # sides: a 1-pixel strip stretched outwards
+    out.paste(img.crop((k, 0, k + 1, h)).resize((pad_x, h)), (0, pad_y))
+    out.paste(img.crop((w - 1 - k, 0, w - k, h)).resize((pad_x, h)), (pad_x + w, pad_y))
+    out.paste(img.crop((0, k, w, k + 1)).resize((w, pad_y)), (pad_x, 0))
+    out.paste(img.crop((0, h - 1 - k, w, h - k)).resize((w, pad_y)), (pad_x, pad_y + h))
+    # corners: the colour near each corner
+    for (cx, cy), (ox, oy) in (((k, k), (0, 0)), ((w - 1 - k, k), (pad_x + w, 0)),
+                               ((k, h - 1 - k), (0, pad_y + h)), ((w - 1 - k, h - 1 - k), (pad_x + w, pad_y + h))):
+        out.paste(img.getpixel((cx, cy)), (ox, oy, ox + pad_x, oy + pad_y))
     return out
 
 
@@ -88,21 +91,24 @@ def fix_artwork(path: str | Path, product_id: str, output: str | Path | None = N
             if "size" in fixes and abs(_scale - 1) > 0.01:
                 result.changes.append(f"Page {page.index + 1}: scaled to {trim_w:g} x {trim_h:g} mm.")
         pad = round(bleed / 25.4 * RENDER_DPI)
-        full = _mirror_extend(trimmed, pad, pad) if "bleed" in fixes else trimmed
+        full = _stretch_edges(trimmed, pad, pad) if "bleed" in fixes else trimmed
         if "bleed" in fixes:
-            result.changes.append(f"Page {page.index + 1}: added {bleed:g} mm bleed by mirroring the edges.")
+            result.changes.append(f"Page {page.index + 1}: added {bleed:g} mm bleed by extending the edge colours.")
 
-        buf = io.BytesIO()
         if "colour" in fixes:
-            full.convert("CMYK").save(buf, "JPEG", quality=95, dpi=(RENDER_DPI, RENDER_DPI))
-            result.changes.append(f"Page {page.index + 1}: converted to CMYK (approximate, no colour profile).")
+            # MuPDF's colour management keeps the look (a naive RGB->CMYK formula shifted dark blue to grey)
+            rgb = pymupdf.Pixmap(pymupdf.csRGB, full.width, full.height, full.convert("RGB").tobytes(), False)
+            image_kwargs = {"pixmap": pymupdf.Pixmap(pymupdf.csCMYK, rgb)}
+            result.changes.append(f"Page {page.index + 1}: converted to CMYK (colour-managed, no printer profile).")
         else:
+            buf = io.BytesIO()
             full.save(buf, "PNG", dpi=(RENDER_DPI, RENDER_DPI))
+            image_kwargs = {"stream": buf.getvalue()}
 
         page_w = trim_w + (2 * bleed if "bleed" in fixes else 0)
         page_h = trim_h + (2 * bleed if "bleed" in fixes else 0)
         pg = doc.new_page(width=mm_to_pt(page_w), height=mm_to_pt(page_h))
-        pg.insert_image(pg.rect, stream=buf.getvalue())
+        pg.insert_image(pg.rect, **image_kwargs)
         if "bleed" in fixes:
             b = mm_to_pt(bleed)
             pg.set_trimbox(pymupdf.Rect(b, b, pg.rect.width - b, pg.rect.height - b))
