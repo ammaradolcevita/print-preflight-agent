@@ -1,0 +1,21 @@
+file,product_id,expect,flags,note
+rw_canva_print_bleed.pdf,business-card,pass,,Canva PDF Print with bleed
+rw_canva_print_no_bleed.pdf,business-card,fail,bleed,"Canva PDF Print without bleed, colour to the edge"
+rw_crop_marks_trimbox.pdf,business-card,pass,,bleed + crop marks + TrimBox
+rw_crop_marks_no_boxes.pdf,business-card,pass,,"bleed + crop marks, no TrimBox"
+rw_crop_marks_no_boxes_no_bleed.pdf,business-card,fail,bleed,"crop marks, no TrimBox, design stops at the cut line"
+rw_trimbox_but_no_bleed_content.pdf,business-card,fail,bleed,"TrimBox says bleed, but the background stops at the cut line"
+rw_illustrator_offset_mediabox.pdf,business-card,pass,,"MediaBox not at 0,0; TrimBox + BleedBox"
+rw_rotated_page.pdf,business-card,pass,,/Rotate 90 with TrimBox
+rw_word_a4.pdf,business-card,fail,size,card drawn on an A4 page
+rw_two_sided.pdf,business-card,pass,,front + back
+rw_vector_only.pdf,business-card,pass,,no pictures at all
+rw_spot_colour.pdf,business-card,warn,colour,spot colour background: must not be silently 'print-ready'
+rw_password.pdf,business-card,cant,,needs a password to open
+rw_owner_password_only.pdf,business-card,pass,,"opens, but permissions restricted"
+rw_png_export.png,business-card,fail,bleed;colour,"Canva PNG, RGB, no bleed"
+rw_phone_photo.jpg,business-card,cant,,photo of a printed card
+rw_square_card.pdf,business-card,fail,size,square card for 85x55
+rw_card_90x50.pdf,business-card,fail,size,90x50 card for 85x55
+rw_large_photo.pdf,business-card,warn,colour,10 MB uncompressed RGB photo
+rw_not_a_pdf.pdf,business-card,cant,,Word file renamed to .pdf
