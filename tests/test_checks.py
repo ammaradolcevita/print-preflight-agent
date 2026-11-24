@@ -204,3 +204,17 @@ def test_designed_samples(tmp_path):
     bad = check_file(business_card(tmp_path / "bad.pdf", mistakes=True), "business-card")
     flagged = {f.check for f in bad.findings if f.severity in ("warn", "error")}
     assert flagged == {"bleed", "dpi", "colour", "safezone", "fonts", "text"}
+
+
+def test_demo_set_verdicts(tmp_path):
+    from preflight.fixes import fix_artwork
+    from preflight.report import check_after_fix
+    from preflight.samples import write_demo_set
+
+    ready, no_bleed, mistakes = write_demo_set(tmp_path)
+    assert check_file(ready, "business-card").verdict == "pass"
+    before = check_file(no_bleed, "business-card")
+    assert {f.check for f in before.findings if f.severity in ("warn", "error")} == {"bleed"}
+    after = check_after_fix(before, fix_artwork(no_bleed, "business-card", output=tmp_path / "fixed.pdf").output)
+    assert after.verdict == "pass"
+    assert check_file(mistakes, "business-card").verdict == "fail"

@@ -1,9 +1,11 @@
-"""Two designed sample business cards for the demo: one with typical mistakes, one print-ready.
+"""Designed sample business cards for the demo, for a made-up person (Sam Jansen, example.com contacts).
 
 Same design, so the difference is only in how the file was prepared:
-- with_mistakes: no bleed while the colour band reaches the edge, a small RGB logo,
+- mistakes=True: no bleed while the colour band reaches the edge, a small RGB logo,
   typos, a broken email, a phone number too close to the edge and one non-embedded font.
-- print_ready: 3 mm bleed, a sharp CMYK logo, clean text inside the safe zone, embedded fonts.
+- mistakes=False: 3 mm bleed, a sharp CMYK logo, clean text inside the safe zone, embedded fonts.
+- mistakes=False, bleed=False: the clean card exported without bleed. Only the bleed is wrong,
+  so the automatic fix turns it into a print-ready file.
 """
 
 from __future__ import annotations
@@ -30,7 +32,7 @@ def _cmyk(rgb: tuple[float, float, float]) -> tuple[float, float, float, float]:
 
 
 def _logo(px: int, mode: str) -> bytes:
-    """Minimal monogram: a coral ring with 'AS' on the band colour."""
+    """Minimal monogram: a coral ring with 'SJ' on the band colour."""
     img = Image.new("RGB", (px, px), BAND_RGB)
     d = ImageDraw.Draw(img)
     m = px * 0.08
@@ -39,7 +41,7 @@ def _logo(px: int, mode: str) -> bytes:
         font = ImageFont.truetype(io.BytesIO(pymupdf.Font("figbo").buffer), int(px * 0.34))
     except Exception:  # noqa: BLE001 - pymupdf-fonts not installed
         font = ImageFont.load_default()
-    d.text((px / 2, px / 2), "AS", fill=(250, 246, 240), font=font, anchor="mm")
+    d.text((px / 2, px / 2), "SJ", fill=(250, 246, 240), font=font, anchor="mm")
     buf = io.BytesIO()
     if mode == "CMYK":
         img.convert("CMYK").save(buf, "JPEG", quality=95)
@@ -48,9 +50,9 @@ def _logo(px: int, mode: str) -> bytes:
     return buf.getvalue()
 
 
-def business_card(path: str | Path, *, mistakes: bool) -> Path:
+def business_card(path: str | Path, *, mistakes: bool, bleed: bool | None = None) -> Path:
     path = Path(path)
-    bleed = 0.0 if mistakes else 3.0
+    bleed = 0.0 if mistakes or bleed is False else 3.0
     w, h = 85 + 2 * bleed, 55 + 2 * bleed
     doc = pymupdf.open()
     page = doc.new_page(width=mm_to_pt(w), height=mm_to_pt(h))
@@ -75,26 +77,46 @@ def business_card(path: str | Path, *, mistakes: bool) -> Path:
 
     bold = "figbo"
     reg = "figo"
-    page.insert_text(at(8, 17), "Ammar Sodikov", fontname=bold, fontsize=13, color=INK)
+    page.insert_text(at(8, 17), "Sam Jansen", fontname=bold, fontsize=13, color=INK)
     title = "Data scientst & AI enginer" if mistakes else "Data scientist & AI engineer"
     page.insert_text(at(8, 22.5), title, fontname=reg, fontsize=7.5, color=GREY)
     page.draw_line(at(8, 26.5), at(18, 26.5), color=ACCENT, width=1.2)
 
-    email = "ammar.sodikov@gmail" if mistakes else "ammar.sodikov@gmail.com"
-    phone = "+31 6 8607 353" if mistakes else "+31 6 8607 3531"
+    email = "hello@example" if mistakes else "hello@example.com"
+    phone = "+31 6 0000 000" if mistakes else "+31 6 0000 0000"
     page.insert_text(at(8, 38), email, fontname=reg, fontsize=7, color=INK)
     if mistakes:
         # website set in Helvetica (not embedded), phone pushed to the very bottom edge
-        page.insert_text(at(8, 43), "www.ammaradolcevita.com", fontname="helv", fontsize=7, color=INK)
+        page.insert_text(at(8, 43), "www.example.com", fontname="helv", fontsize=7, color=INK)
         page.insert_text(at(8, 53.6), phone, fontname=reg, fontsize=7, color=INK)
     else:
-        page.insert_text(at(8, 43), "www.ammaradolcevita.com", fontname=reg, fontsize=7, color=INK)
+        page.insert_text(at(8, 43), "www.example.com", fontname=reg, fontsize=7, color=INK)
         page.insert_text(at(8, 48), phone, fontname=reg, fontsize=7, color=INK)
 
     if bleed:
         b = mm_to_pt(bleed)
         page.set_trimbox(pymupdf.Rect(b, b, page.rect.width - b, page.rect.height - b))
     path.parent.mkdir(parents=True, exist_ok=True)
+    doc.subset_fonts()  # embed only the glyphs used, like real design tools do
     doc.save(path, garbage=3, deflate=True)
     doc.close()
     return path
+
+
+DEMO_SET = {
+    "sample_print_ready.pdf": {"mistakes": False},
+    "sample_missing_bleed.pdf": {"mistakes": False, "bleed": False},
+    "sample_with_mistakes.pdf": {"mistakes": True},
+}
+
+
+def write_demo_set(folder: str | Path) -> list[Path]:
+    """The three demo files: print-ready, only bleed missing (fixable), many mistakes."""
+    return [business_card(Path(folder) / name, **kw) for name, kw in DEMO_SET.items()]
+
+
+if __name__ == "__main__":  # python -m preflight.samples samples/
+    import sys
+
+    for p in write_demo_set(sys.argv[1] if len(sys.argv) > 1 else "samples"):
+        print(p)
