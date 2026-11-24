@@ -62,10 +62,11 @@
   .brand { display: flex; align-items: center; gap: 10px; }
   .logo { width: 32px; height: 32px; border-radius: 10px; background: var(--accent-soft); color: var(--accent);
           display: grid; place-items: center; flex: none; }
-  .product { display: flex; align-items: center; gap: 8px; }
+  .product { display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; }
   select {
     font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--border);
     border-radius: 999px; padding: 7px 34px 7px 14px; appearance: none; cursor: pointer; max-width: 100%;
+    min-width: 0; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;
     background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
     background-position: calc(100% - 18px) 55%, calc(100% - 13px) 55%; background-size: 5px 5px; background-repeat: no-repeat;
   }
@@ -175,6 +176,8 @@
     .steps .label { display: none; }
     .steps li.on .label { display: inline; }
     .actions .btn { flex: 1 1 100%; justify-content: center; }
+    .product { flex: 1 1 100%; }
+    .product select { flex: 1 1 auto; }
   }
 </style>
 </head>
@@ -555,10 +558,10 @@
     var fixable = issues.some(function (i) { return i.fixable; });
     $("fix-btn").classList.toggle("hidden", !fixable || cantOpen);
     $("fix-error").classList.add("hidden");
+    $("upload").classList.add("hidden");   // one step at a time
     $("results").classList.remove("hidden");
     $("fixed").classList.add("hidden");
     step(2);
-    $("results").scrollIntoView({ behavior: "smooth", block: "start" });
 
     var lines = issues.map(function (i) {
       return i.n + ". [" + i.severity + (i.fixable ? ", fixable automatically" : ", needs the designer") + "] " + i.message;
@@ -605,9 +608,9 @@
     $("left").innerHTML = left.map(issueItem).join("");
     state.downloadUrl = f.download_url;
     $("link-fallback").classList.add("hidden");
+    $("results").classList.add("hidden");
     $("fixed").classList.remove("hidden");
     step(3);
-    $("fixed").scrollIntoView({ behavior: "smooth", block: "start" });
     tellClaude("Print Preflight fixed the file: " + f.verdict_before + " -> " + f.verdict_after + ".\nChanges: " +
       (f.changes || []).join(" ") + "\nStill needs the designer: " +
       (left.length ? left.map(function (i) { return i.message; }).join(" ") : "nothing") +
@@ -641,10 +644,10 @@
     state.fileId = null;
     $("results").classList.add("hidden");
     $("fixed").classList.add("hidden");
+    $("upload").classList.remove("hidden");
     clearError();
     step(1);
-    $("upload").scrollIntoView({ behavior: "smooth", block: "start" });
-    $("file").focus();
+    $("file").focus({ preventScroll: true });
   }
   $("again-btn").addEventListener("click", again);
   $("again-btn-2").addEventListener("click", again);
