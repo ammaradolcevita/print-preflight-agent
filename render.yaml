@@ -1,0 +1,15 @@
+# Render Blueprint for the hosted MCP server (Claude custom connector: https://<service>.onrender.com/mcp)
+services:
+  - type: web
+    name: print-preflight
+    runtime: python
+    plan: 0.5c-512mb          # "Starter": always on (the free plan sleeps after 15 min = ~1 min cold start)
+    region: frankfurt
+    branch: feature/hosted-mcp-app   # switch to main after the merge
+    autoDeployTrigger: commit
+    buildCommand: pip install -e ".[mcp]"
+    startCommand: uvicorn mcp_server.http_app:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips="*" --workers 1
+    healthCheckPath: /health
+    envVars:
+      - key: PREFLIGHT_STORAGE
+        value: /tmp/print-preflight
