@@ -7,177 +7,154 @@
 <style>
   :root {
     --bg: #ffffff;
-    --surface: #f5f7f6;
-    --surface-2: #eef2f0;
-    --text: #18201d;
-    --muted: #5b6762;
-    --border: #e1e6e3;
-    --accent: #17805a;
-    --accent-hover: #126b4a;
-    --accent-soft: #e6f4ed;
+    --soft: #f6f7f6;
+    --line: #e7eae8;
+    --text: #1b2220;
+    --muted: #66716c;
+    --accent: #1a7f5a;
+    --accent-hover: #146a4a;
+    --accent-soft: #eaf5ef;
     --on-accent: #ffffff;
-    --warn: #a35f00;
-    --warn-soft: #fff3df;
-    --error: #c0302c;
-    --error-soft: #fdeceb;
-    --info: #2f6db3;
+    --warn: #9a5a00;
+    --warn-soft: #fff5e3;
+    --error: #b83430;
+    --error-soft: #fdf0ef;
     --focus: #2f6db3;
-    --radius: 16px;
-    --radius-sm: 10px;
-    --shadow: 0 1px 2px rgba(16, 24, 20, .06), 0 4px 16px rgba(16, 24, 20, .05);
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #141816; --surface: #1c211f; --surface-2: #232a27; --text: #eef2f0; --muted: #a3afa9;
-      --border: #2e3633; --accent: #3fb884; --accent-hover: #5cc898; --accent-soft: #183327; --on-accent: #0c1511;
-      --warn: #f0b155; --warn-soft: #33270f; --error: #f07c76; --error-soft: #3a1b1a; --info: #7fb0ea;
-      --focus: #7fb0ea; --shadow: none; color-scheme: dark;
+      --bg: #161a18; --soft: #1e2321; --line: #2c3330; --text: #eef1ef; --muted: #a2ada8;
+      --accent: #48bd8a; --accent-hover: #63cc9c; --accent-soft: #1a3328; --on-accent: #0d1612;
+      --warn: #f0b25a; --warn-soft: #34290f; --error: #f08680; --error-soft: #3a1d1c; --focus: #86b5ec;
+      color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
-    --bg: #141816; --surface: #1c211f; --surface-2: #232a27; --text: #eef2f0; --muted: #a3afa9;
-    --border: #2e3633; --accent: #3fb884; --accent-hover: #5cc898; --accent-soft: #183327; --on-accent: #0c1511;
-    --warn: #f0b155; --warn-soft: #33270f; --error: #f07c76; --error-soft: #3a1b1a; --info: #7fb0ea;
-    --focus: #7fb0ea; --shadow: none; color-scheme: dark;
+    --bg: #161a18; --soft: #1e2321; --line: #2c3330; --text: #eef1ef; --muted: #a2ada8;
+    --accent: #48bd8a; --accent-hover: #63cc9c; --accent-soft: #1a3328; --on-accent: #0d1612;
+    --warn: #f0b25a; --warn-soft: #34290f; --error: #f08680; --error-soft: #3a1d1c; --focus: #86b5ec;
+    color-scheme: dark;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; }
   body {
     background: var(--bg); color: var(--text);
-    font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 760px; margin: 0 auto; padding: 20px 16px 16px; }
-  h1, h2, h3 { margin: 0; line-height: 1.25; }
-  h1 { font-size: 20px; font-weight: 750; letter-spacing: -.01em; }
-  h2 { font-size: 17px; font-weight: 700; }
-  p { margin: 0; }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 22px 20px 16px; }
+  h1, h2, h3, p { margin: 0; }
+  h1 { font-size: 17px; font-weight: 700; }
+  h2 { font-size: 22px; font-weight: 750; letter-spacing: -.015em; line-height: 1.25; }
   .muted { color: var(--muted); }
   .small { font-size: 13px; }
   .hidden { display: none !important; }
+  section > * + * { margin-top: 18px; }
 
   /* header */
-  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-  .brand { display: flex; align-items: center; gap: 10px; }
-  .logo { width: 32px; height: 32px; border-radius: 10px; background: var(--accent-soft); color: var(--accent);
-          display: grid; place-items: center; flex: none; }
-  .product { display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .brand { display: flex; align-items: center; gap: 9px; flex: none; }
+  .logo { width: 28px; height: 28px; border-radius: 8px; background: var(--accent-soft); color: var(--accent);
+          display: grid; place-items: center; }
   select {
-    font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--border);
-    border-radius: 999px; padding: 7px 34px 7px 14px; appearance: none; cursor: pointer; max-width: 100%;
-    min-width: 0; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;
+    font: inherit; font-size: 14px; color: var(--text); background: transparent; border: 1px solid var(--line);
+    border-radius: 999px; padding: 6px 30px 6px 12px; appearance: none; cursor: pointer;
+    min-width: 0; max-width: 100%; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;
     background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
-    background-position: calc(100% - 18px) 55%, calc(100% - 13px) 55%; background-size: 5px 5px; background-repeat: no-repeat;
+    background-position: calc(100% - 16px) 55%, calc(100% - 11px) 55%; background-size: 5px 5px; background-repeat: no-repeat;
   }
 
-  /* steps */
-  .steps { display: flex; gap: 6px; margin: 18px 0 16px; padding: 0; list-style: none; flex-wrap: wrap; }
-  .steps li { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted);
-              padding: 5px 12px 5px 6px; border-radius: 999px; background: var(--surface); }
-  .steps .n { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 11px;
-              font-weight: 700; background: var(--surface-2); color: var(--muted); }
-  .steps li.on { color: var(--text); background: var(--accent-soft); font-weight: 600; }
-  .steps li.on .n { background: var(--accent); color: var(--on-accent); }
-  .steps li.done .n { background: var(--accent-soft); color: var(--accent); }
+  /* progress: one quiet line */
+  .steps { display: flex; gap: 6px; margin: 18px 0 26px; padding: 0; list-style: none; }
+  .steps li { flex: 1; font-size: 12px; color: var(--muted); }
+  .steps li::before { content: ""; display: block; height: 4px; border-radius: 99px; background: var(--line); margin-bottom: 6px; }
+  .steps li.done::before, .steps li.on::before { background: var(--accent); }
+  .steps li.on { color: var(--text); font-weight: 650; }
 
-  .card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px;
-          box-shadow: var(--shadow); }
-  .stack > * + * { margin-top: 14px; }
-
-  /* specs */
-  .specs { display: flex; flex-wrap: wrap; gap: 8px; }
-  .spec { background: var(--surface); border-radius: var(--radius-sm); padding: 8px 12px; min-width: 0; }
-  .spec b { display: block; font-size: 15px; }
-  .spec span { font-size: 12px; color: var(--muted); }
-  .beta { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--warn);
-          background: var(--warn-soft); border-radius: 999px; padding: 2px 8px; }
-
-  /* drop zone */
-  .drop { display: block; border: 2px dashed var(--border); border-radius: var(--radius); padding: 30px 16px;
-          text-align: center; cursor: pointer; background: var(--surface); transition: border-color .15s, background .15s; }
+  /* upload */
+  .lead { font-size: 15px; color: var(--muted); margin-top: 6px; }
+  .drop { display: block; border: 1.5px dashed var(--line); border-radius: 18px; padding: 36px 16px; text-align: center;
+          cursor: pointer; background: var(--soft); transition: border-color .15s, background .15s; }
   .drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); }
   .drop:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
   .drop input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-  .drop .icon { width: 44px; height: 44px; margin: 0 auto 10px; border-radius: 14px; display: grid; place-items: center;
-                background: var(--bg); color: var(--accent); }
-  .drop strong { font-size: 16px; }
-  .link { color: var(--accent); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+  .drop .icon { width: 46px; height: 46px; margin: 0 auto 12px; border-radius: 50%; display: grid; place-items: center;
+                background: var(--accent); color: var(--on-accent); }
+  .drop strong { font-size: 16px; display: block; }
+  .link { color: var(--accent); font-weight: 600; }
+  .specline { font-size: 13px; color: var(--muted); }
+  .specline b { color: var(--text); font-weight: 600; }
+  .beta { font-size: 11px; font-weight: 700; color: var(--warn); background: var(--warn-soft); border-radius: 99px;
+          padding: 1px 8px; margin-left: 4px; vertical-align: 1px; }
 
   /* buttons */
-  .actions { display: flex; flex-wrap: wrap; gap: 10px; }
-  button.btn {
-    font: inherit; font-weight: 650; border-radius: 999px; padding: 10px 18px; cursor: pointer; border: 1px solid transparent;
-    display: inline-flex; align-items: center; gap: 8px; min-height: 42px;
-  }
-  .btn.primary { background: var(--accent); color: var(--on-accent); }
-  .btn.primary:hover { background: var(--accent-hover); }
-  .btn.secondary { background: var(--bg); color: var(--text); border-color: var(--border); }
-  .btn.secondary:hover { background: var(--surface); }
+  .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; }
+  button { font: inherit; cursor: pointer; }
+  .btn { font-weight: 650; border-radius: 999px; padding: 11px 22px; border: 0; min-height: 44px;
+         background: var(--accent); color: var(--on-accent); }
+  .btn:hover { background: var(--accent-hover); }
   .btn:disabled { opacity: .55; cursor: default; }
-  button:focus-visible, select:focus-visible, a:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .textbtn { background: none; border: 0; padding: 8px 2px; color: var(--muted); font-weight: 600; font-size: 14px; }
+  .textbtn:hover { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+  button:focus-visible, select:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
-  /* progress */
-  .progress { height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
-  .progress > div { height: 100%; width: 0; background: var(--accent); border-radius: 999px; transition: width .2s; }
+  /* progress bar */
+  .progress { height: 6px; border-radius: 99px; background: var(--line); overflow: hidden; }
+  .progress > div { height: 100%; width: 0; background: var(--accent); border-radius: 99px; transition: width .2s; }
   .progress.busy > div { width: 35%; animation: slide 1.1s ease-in-out infinite; }
   @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
   @media (prefers-reduced-motion: reduce) { .progress.busy > div { animation: none; width: 100%; opacity: .5; } }
 
   /* verdict */
-  .verdict { display: flex; gap: 14px; align-items: center; padding: 16px; border-radius: var(--radius); }
-  .verdict .badge { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; flex: none;
-                    font-size: 24px; font-weight: 800; color: #fff; }
-  .verdict.pass { background: var(--accent-soft); } .verdict.pass .badge { background: var(--accent); color: var(--on-accent); }
-  .verdict.warn { background: var(--warn-soft); }   .verdict.warn .badge { background: var(--warn); color: var(--bg); }
-  .verdict.fail { background: var(--error-soft); }  .verdict.fail .badge { background: var(--error); color: var(--bg); }
-  .verdict h2 { font-size: 19px; }
-  .time { font-variant-numeric: tabular-nums; }
+  .verdict { display: flex; gap: 14px; align-items: center; }
+  .verdict .badge { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; flex: none;
+                    font-size: 20px; font-weight: 800; }
+  .verdict.pass .badge { background: var(--accent-soft); color: var(--accent); }
+  .verdict.warn .badge { background: var(--warn-soft); color: var(--warn); }
+  .verdict.fail .badge { background: var(--error-soft); color: var(--error); }
+  .verdict p { color: var(--muted); }
 
   /* preview */
-  .preview { border-radius: var(--radius); background: var(--surface); padding: 10px; }
-  .preview img { display: block; width: 100%; height: auto; border-radius: var(--radius-sm); }
-  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; font-size: 13px; color: var(--muted); }
-  .legend i { display: inline-block; width: 22px; height: 0; vertical-align: middle; margin-right: 6px; border-top: 2px solid; }
+  .preview img { display: block; width: 100%; height: auto; border-radius: 14px; background: var(--soft); }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 8px; font-size: 12px; color: var(--muted); }
+  .legend i { display: inline-block; width: 18px; vertical-align: middle; margin-right: 6px; border-top: 2px solid; }
   .legend .cut { border-color: var(--text); }
   .legend .bleed { border-top-style: dashed; border-color: #d62828; }
   .legend .safe { border-top-style: dashed; border-color: #1e9646; }
 
   /* issues */
-  .issues { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
-  .issue { display: flex; gap: 12px; align-items: flex-start; border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; }
-  .issue .num { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; flex: none;
-                font-weight: 800; font-size: 13px; color: #fff; }
-  .issue.error .num { background: #d62828; } .issue.warn .num { background: #e89614; }
-  .issue p { margin-top: 1px; }
-  .tag { display: inline-block; margin-top: 6px; font-size: 12px; font-weight: 650; border-radius: 999px; padding: 2px 10px; }
-  .tag.fix { background: var(--accent-soft); color: var(--accent); }
-  .tag.human { background: var(--surface-2); color: var(--muted); }
-  .ok-line { display: flex; gap: 10px; align-items: center; color: var(--muted); }
+  .label { font-size: 13px; font-weight: 650; color: var(--muted); margin-bottom: 8px; }
+  .issues { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+  .issue { display: flex; gap: 12px; align-items: flex-start; background: var(--soft); border-radius: 14px; padding: 12px 14px; }
+  .issue .num { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; flex: none;
+                font-weight: 800; font-size: 12px; color: #fff; margin-top: 1px; }
+  .issue.error .num { background: #d62828; } .issue.warn .num { background: #e08a10; }
+  .tag { display: inline-block; margin-top: 4px; font-size: 12px; font-weight: 600; }
+  .tag.fix { color: var(--accent); } .tag.human { color: var(--muted); }
+  .allgood { background: var(--accent-soft); border-radius: 14px; padding: 12px 14px; }
 
   /* before / after */
   .ba { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .ba figure { margin: 0; }
-  .ba figcaption { font-size: 13px; font-weight: 650; color: var(--muted); margin-bottom: 6px; }
-  .changes { margin: 0; padding-left: 20px; }
-  .changes li + li { margin-top: 4px; }
+  .ba figcaption { font-size: 12px; font-weight: 650; color: var(--muted); margin-bottom: 6px; }
+  .changes { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .changes li { padding-left: 26px; position: relative; }
+  .changes li::before { content: "✓"; position: absolute; left: 4px; color: var(--accent); font-weight: 800; }
 
-  .alert { border-radius: 14px; padding: 12px 14px; background: var(--error-soft); color: var(--text); }
+  .alert { border-radius: 14px; padding: 12px 14px; background: var(--error-soft); }
   .alert b { color: var(--error); }
-  .linkbox { word-break: break-all; font-size: 13px; background: var(--surface); padding: 10px 12px; border-radius: var(--radius-sm); }
+  .linkbox { word-break: break-all; font-size: 13px; background: var(--soft); padding: 10px 12px; border-radius: 10px; }
 
-  footer { margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted);
-           display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  footer { margin-top: 28px; font-size: 12px; color: var(--muted); text-align: center; }
 
   @media (max-width: 520px) {
-    .wrap { padding: 16px 16px 12px; }
+    .wrap { padding: 18px 16px 12px; }
+    .top { flex-wrap: wrap; }
+    .top select { flex: 1 1 100%; }
+    h2 { font-size: 20px; }
     .ba { grid-template-columns: 1fr; }
-    .steps li { padding-right: 10px; }
-    .steps .label { display: none; }
-    .steps li.on .label { display: inline; }
-    .actions .btn { flex: 1 1 100%; justify-content: center; }
-    .product { flex: 1 1 100%; }
-    .product select { flex: 1 1 auto; }
+    .actions .btn { flex: 1 1 100%; }
   }
 </style>
 </head>
@@ -186,79 +163,71 @@
   <header class="top">
     <div class="brand">
       <div class="logo" aria-hidden="true">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="9" rx="2"/><path d="M7 14h10v7H7z"/><path d="m9.5 17.5 1.5 1.5 3.5-3.5"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>
       </div>
       <h1>Print Preflight</h1>
     </div>
-    <div class="product">
-      <label for="product" class="small muted">Product</label>
-      <select id="product"></select>
-    </div>
+    <select id="product" aria-label="Product"></select>
   </header>
 
   <ol class="steps" aria-label="Progress">
-    <li data-step="1"><span class="n">1</span><span class="label">Upload</span></li>
-    <li data-step="2"><span class="n">2</span><span class="label">Results</span></li>
-    <li data-step="3"><span class="n">3</span><span class="label">Fix</span></li>
-    <li data-step="4"><span class="n">4</span><span class="label">Order page</span></li>
+    <li data-step="1">Upload</li>
+    <li data-step="2">Results</li>
+    <li data-step="3">Fix</li>
+    <li data-step="4">Order</li>
   </ol>
 
-  <main class="stack">
+  <main>
     <!-- 1. upload -->
-    <section id="upload" class="card stack">
+    <section id="upload">
       <div>
-        <h2>Check your print file</h2>
-        <p class="muted">We check size, bleed, resolution, colours, fonts and text near the edge — in about a second.</p>
+        <h2>Is your design ready to print?</h2>
+        <p class="lead">Upload it and we'll check it in about a second.</p>
       </div>
-      <div class="specs" id="specs"></div>
       <label class="drop" id="drop">
         <input type="file" id="file" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg">
         <div class="icon" aria-hidden="true">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V5"/><path d="m7 10 5-5 5 5"/><path d="M5 19h14"/></svg>
         </div>
-        <strong>Drop your design here</strong>
-        <p class="muted">or <span class="link">choose a file</span></p>
-        <p class="small muted" id="limits">PDF, PNG or JPG · max 20 MB</p>
+        <strong>Drop your file here</strong>
+        <span class="muted">or <span class="link">choose a file</span></span>
+        <span class="small muted" style="display:block;margin-top:6px" id="limits">PDF, PNG or JPG · max 20 MB</span>
       </label>
-      <div id="busy" class="stack hidden" aria-hidden="true">
-        <div class="progress" id="bar"><div></div></div>
-      </div>
+      <p class="specline" id="specs"></p>
+      <div id="busy" class="hidden" aria-hidden="true"><div class="progress" id="bar"><div></div></div></div>
       <p id="status" class="muted small" role="status" aria-live="polite"></p>
       <div id="error" class="alert hidden" role="alert"></div>
     </section>
 
     <!-- 2. results -->
-    <section id="results" class="card stack hidden" aria-labelledby="verdict-title">
+    <section id="results" class="hidden" aria-labelledby="verdict-title">
       <div id="verdict" class="verdict">
         <div class="badge" id="verdict-icon" aria-hidden="true"></div>
         <div>
           <h2 id="verdict-title"></h2>
           <p id="verdict-text"></p>
-          <p class="small muted"><span id="file-name"></span> · checked in <span class="time" id="seconds"></span></p>
         </div>
       </div>
       <div class="preview" id="preview-box">
         <img id="preview" alt="Your design with the cut line, bleed and safe zone drawn on it">
-        <div class="legend"><span><i class="cut"></i>Cut line</span><span><i class="bleed"></i>Bleed must reach here</span><span><i class="safe"></i>Keep text inside</span></div>
+        <div class="legend"><span><i class="cut"></i>Cut line</span><span><i class="bleed"></i>Bleed reaches here</span><span><i class="safe"></i>Keep text inside</span></div>
       </div>
       <div>
-        <h3 class="small muted" style="margin-bottom:8px">What we found</h3>
+        <p class="label" id="issues-label">What we found</p>
         <ul class="issues" id="issues"></ul>
       </div>
       <div class="actions">
-        <button class="btn primary" id="fix-btn" type="button">Fix automatically</button>
-        <button class="btn secondary" id="order-btn" type="button">Go to the order page</button>
-        <button class="btn secondary" id="again-btn" type="button">Check another file</button>
+        <button class="btn" id="fix-btn" type="button">Fix automatically</button>
+        <button class="textbtn" id="order-btn" type="button">Go to the order page</button>
+        <button class="textbtn" id="again-btn" type="button">Check another file</button>
       </div>
-      <div id="fix-busy" class="stack hidden">
-        <div class="progress busy"><div></div></div>
-        <p class="muted small">Fixing your file…</p>
-      </div>
+      <div id="fix-busy" class="hidden"><div class="progress busy"><div></div></div><p class="muted small" style="margin-top:8px">Fixing your file…</p></div>
       <div id="fix-error" class="alert hidden" role="alert"></div>
+      <p class="small muted"><span id="file-name"></span> · checked in <span id="seconds"></span></p>
     </section>
 
     <!-- 3. fixed -->
-    <section id="fixed" class="card stack hidden" aria-labelledby="fixed-title">
+    <section id="fixed" class="hidden" aria-labelledby="fixed-title">
       <div id="fixed-verdict" class="verdict">
         <div class="badge" id="fixed-icon" aria-hidden="true"></div>
         <div>
@@ -271,27 +240,24 @@
         <figure><figcaption>After</figcaption><div class="preview"><img id="after-img" alt="The fixed design"></div></figure>
       </div>
       <div>
-        <h3 class="small muted" style="margin-bottom:6px">What we changed</h3>
+        <p class="label">What we changed</p>
         <ul class="changes" id="changes"></ul>
       </div>
       <div id="left-box">
-        <h3 class="small muted" style="margin-bottom:8px">Still needs your designer</h3>
+        <p class="label">Still needs your designer</p>
         <ul class="issues" id="left"></ul>
       </div>
       <div class="actions">
-        <button class="btn primary" id="download-btn" type="button">Download fixed PDF</button>
-        <button class="btn secondary" id="order-btn-2" type="button">Go to the order page</button>
-        <button class="btn secondary" id="again-btn-2" type="button">Check another file</button>
+        <button class="btn" id="download-btn" type="button">Download fixed PDF</button>
+        <button class="textbtn" id="order-btn-2" type="button">Go to the order page</button>
+        <button class="textbtn" id="again-btn-2" type="button">Check another file</button>
       </div>
       <p id="link-fallback" class="linkbox hidden"></p>
-      <p class="small muted">The fixed file is a 300 dpi print image: text is no longer editable. For the best result, ask your designer to export again with 3 mm bleed. The download link works for 60 minutes.</p>
+      <p class="small muted">The fixed file is a print-ready image, so its text is no longer editable. The link works for 60 minutes.</p>
     </section>
   </main>
 
-  <footer>
-    <span>Unofficial prototype. Not affiliated with HelloPrint.</span>
-    <span>Files are deleted after 60 minutes.</span>
-  </footer>
+  <footer>Unofficial prototype. Not affiliated with HelloPrint. · Files are deleted after 60 minutes.</footer>
 </div>
 
 <script>/*__EXT_APPS_SDK__*/</script>
@@ -365,6 +331,11 @@
 
   // ------------------------------------------------------------ product + specs
 
+  function shortName(p) {
+    return p.product_id === "business-card" ? "Business cards · 85 × 55 mm"
+      : p.name.replace(/\s*\((\d+) x (\d+) mm\)/, " · $1 × $2 mm");
+  }
+
   function setup(products, productId, maxMb) {
     state.products = products;
     if (productId) state.product = productId;
@@ -374,7 +345,7 @@
     products.forEach(function (p) {
       var o = document.createElement("option");
       o.value = p.product_id;
-      o.textContent = p.name + (p.beta ? " (beta)" : "");
+      o.textContent = shortName(p) + (p.beta ? " (beta)" : "");
       sel.appendChild(o);
     });
     sel.value = state.product;
@@ -387,16 +358,9 @@
 
   function renderSpecs() {
     var p = current();
-    var t = p.trim_mm;
-    var items = [
-      [t[0] + " × " + t[1] + " mm", "Final size"],
-      [p.bleed_mm + " mm", "Bleed on every side"],
-      [p.safe_margin_mm + " mm", "Keep text this far inside"],
-      [p.min_dpi + " dpi", "Pictures at least"]
-    ];
-    $("specs").innerHTML = items.map(function (i) {
-      return '<div class="spec"><b>' + esc(i[0]) + "</b><span>" + esc(i[1]) + "</span></div>";
-    }).join("") + (p.beta ? '<div class="spec"><span class="beta">beta</span><span style="display:block;margin-top:4px">Best tested on business cards</span></div>' : "");
+    $("specs").innerHTML = "We check against: <b>" + p.trim_mm[0] + " × " + p.trim_mm[1] + " mm</b>, <b>" +
+      p.bleed_mm + " mm</b> bleed, text <b>" + p.safe_margin_mm + " mm</b> from the edge, pictures <b>" +
+      p.min_dpi + " dpi</b>." + (p.beta ? '<span class="beta">beta</span>' : "");
   }
 
   $("product").addEventListener("change", function (e) {
@@ -507,15 +471,16 @@
   // ------------------------------------------------------------ check
 
   var ICON = { pass: "✓", warn: "!", fail: "✕" };
-  var TITLE = { pass: "Ready to print", warn: "Check the warnings", fail: "Needs fixing" };
+  var TITLE = { pass: "Ready to print", warn: "Almost ready", fail: "Needs a fix first" };
   var SENTENCE = {
     pass: "We found no problems for this product.",
-    warn: "It can be printed, but please look at the points below first.",
-    fail: "Printing it like this would likely give a bad result. See what to fix below."
+    warn: "It can be printed, but please look at the points below.",
+    fail: "Printed like this, it would likely not look right."
   };
 
   function runCheck() {
     clearError();
+    $("upload").classList.remove("hidden");
     setBusy(true, null);
     setStatus("Checking your file…");
     callTool("check_artwork", { file_id: state.fileId, product_id: state.product }).then(function (res) {
@@ -532,7 +497,7 @@
   }
 
   function issueItem(i) {
-    var tag = i.fixable ? '<span class="tag fix">Fixable automatically</span>' : '<span class="tag human">Needs your designer</span>';
+    var tag = i.fixable ? '<span class="tag fix">We can fix this for you</span>' : '<span class="tag human">Needs your designer</span>';
     return '<li class="issue ' + esc(i.severity) + '"><span class="num" aria-label="Issue ' + i.n + '">' + i.n +
       "</span><div><p>" + esc(i.message) + "</p>" + tag + "</div></li>";
   }
@@ -553,8 +518,10 @@
     $("preview-box").classList.toggle("hidden", !img);
     if (img) $("preview").src = img;
     var issues = r.numbered_issues || [];
+    $("issues-label").textContent = issues.length === 1 ? "1 thing to look at" : issues.length + " things to look at";
+    $("issues-label").classList.toggle("hidden", !issues.length);
     $("issues").innerHTML = issues.length ? issues.map(issueItem).join("")
-      : '<li class="ok-line">✓ Size, bleed, resolution, colours, fonts and text all look good.</li>';
+      : '<li class="allgood">✓ Size, bleed, resolution, colours, fonts and text all look good.</li>';
     var fixable = issues.some(function (i) { return i.fixable; });
     $("fix-btn").classList.toggle("hidden", !fixable || cantOpen);
     $("fix-error").classList.add("hidden");
@@ -595,14 +562,20 @@
   function showFixed(f, img) {
     var after = f.report_after || {};
     showVerdict("fixed", f.verdict_after);
-    $("fixed-title").textContent = f.verdict_after === "pass" ? "Fixed — ready to print"
-      : f.verdict_after === "warn" ? "Fixed — check the remaining warnings" : "Partly fixed";
+    $("fixed-title").textContent = f.verdict_after === "pass" ? "Fixed and ready to print"
+      : f.verdict_after === "warn" ? "Fixed — a few things left" : "Partly fixed";
     $("fixed-text").textContent = f.verdict_after === "pass"
-      ? "Everything we could fix is fixed, and nothing else needs attention."
-      : "We fixed what is safe to fix. The points below need a decision from you or your designer.";
+      ? "Download the new file and use it for your order."
+      : "We fixed what is safe to fix. The rest needs a decision from you or your designer.";
     $("before-img").src = state.beforeImg || "";
     $("after-img").src = img || "";
-    $("changes").innerHTML = (f.changes || []).map(function (c) { return "<li>" + esc(c) + "</li>"; }).join("");
+    $("changes").innerHTML = (f.changes || []).filter(function (c) { return !/no longer editable/.test(c); })
+      .map(function (c) {
+        c = c.replace(/^Page \d+: /, "").replace(/\s*\(colour-managed, no printer profile\)/, "")
+             .replace(/^converted to CMYK/, "converted colours to print colours (CMYK)");
+        return "<li>" + esc(c.charAt(0).toUpperCase() + c.slice(1)) + "</li>";
+      })
+      .filter(function (li, i, all) { return all.indexOf(li) === i; }).join("");  // 2-sided files: same change once
     var left = after.numbered_issues || [];
     $("left-box").classList.toggle("hidden", !left.length);
     $("left").innerHTML = left.map(issueItem).join("");
