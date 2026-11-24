@@ -13,3 +13,4 @@ BRIEF_hosted_mcp_app.md
 .venv/
 .env
 eval/realworld/files/
+.preview/

@@ -156,3 +156,36 @@ def test_fix_and_download(card, client):
 def test_expired_file_id_gives_clear_error(client):
     res = call(client, "check_artwork", {"file_id": "A" * 32, "product_id": "business-card"})
     assert res["isError"] and "no longer available" in res["content"][0]["text"]
+
+
+# ---------------------------------------------------------------- MCP App (Preflight Studio)
+
+
+def rpc(client, method, params) -> dict:
+    r = client.post("/mcp", headers=H, json={"jsonrpc": "2.0", "id": 1, "method": method, "params": params})
+    assert r.status_code == 200, r.text
+    return r.json()["result"]
+
+
+def test_studio_tools_metadata(client):
+    tools = {t["name"]: t for t in rpc(client, "tools/list", {})["tools"]}
+    assert tools["open_preflight_studio"]["_meta"]["ui"]["resourceUri"] == http_app.STUDIO_URI
+    assert tools["upload_chunk"]["_meta"]["ui"]["visibility"] == ["app"]  # hidden from the model
+
+
+def test_studio_resource_is_self_contained(client):
+    content = rpc(client, "resources/read", {"uri": http_app.STUDIO_URI})["contents"][0]
+    html = content["text"]
+    assert content["mimeType"] == "text/html;profile=mcp-app"
+    assert "globalThis.McpExtApps=" in html and "/*__EXT_APPS_SDK__*/" not in html
+    assert "export{" not in html  # the module export was turned into a global
+    assert "<script src" not in html and "https://" not in html.split("<script>", 1)[0]  # no external loads
+    assert "Not affiliated with HelloPrint" in html
+
+
+def test_open_studio_returns_products(client):
+    res = call(client, "open_preflight_studio", {"product_id": "flyer-a6"})
+    data = res["structuredContent"]
+    assert data["product_id"] == "flyer-a6"
+    assert [p["product_id"] for p in data["products"]] == list(http_app.HOSTED_PRODUCTS)
+    assert res["content"][0]["type"] == "text"  # text fallback for hosts without MCP Apps

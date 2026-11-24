@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Print Preflight</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f5f7f6;
+    --surface-2: #eef2f0;
+    --text: #18201d;
+    --muted: #5b6762;
+    --border: #e1e6e3;
+    --accent: #17805a;
+    --accent-hover: #126b4a;
+    --accent-soft: #e6f4ed;
+    --on-accent: #ffffff;
+    --warn: #a35f00;
+    --warn-soft: #fff3df;
+    --error: #c0302c;
+    --error-soft: #fdeceb;
+    --info: #2f6db3;
+    --focus: #2f6db3;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --shadow: 0 1px 2px rgba(16, 24, 20, .06), 0 4px 16px rgba(16, 24, 20, .05);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141816; --surface: #1c211f; --surface-2: #232a27; --text: #eef2f0; --muted: #a3afa9;
+      --border: #2e3633; --accent: #3fb884; --accent-hover: #5cc898; --accent-soft: #183327; --on-accent: #0c1511;
+      --warn: #f0b155; --warn-soft: #33270f; --error: #f07c76; --error-soft: #3a1b1a; --info: #7fb0ea;
+      --focus: #7fb0ea; --shadow: none; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141816; --surface: #1c211f; --surface-2: #232a27; --text: #eef2f0; --muted: #a3afa9;
+    --border: #2e3633; --accent: #3fb884; --accent-hover: #5cc898; --accent-soft: #183327; --on-accent: #0c1511;
+    --warn: #f0b155; --warn-soft: #33270f; --error: #f07c76; --error-soft: #3a1b1a; --info: #7fb0ea;
+    --focus: #7fb0ea; --shadow: none; color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 20px 16px 16px; }
+  h1, h2, h3 { margin: 0; line-height: 1.25; }
+  h1 { font-size: 20px; font-weight: 750; letter-spacing: -.01em; }
+  h2 { font-size: 17px; font-weight: 700; }
+  p { margin: 0; }
+  .muted { color: var(--muted); }
+  .small { font-size: 13px; }
+  .hidden { display: none !important; }
+
+  /* header */
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .logo { width: 32px; height: 32px; border-radius: 10px; background: var(--accent-soft); color: var(--accent);
+          display: grid; place-items: center; flex: none; }
+  .product { display: flex; align-items: center; gap: 8px; }
+  select {
+    font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--border);
+    border-radius: 999px; padding: 7px 34px 7px 14px; appearance: none; cursor: pointer; max-width: 100%;
+    background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+    background-position: calc(100% - 18px) 55%, calc(100% - 13px) 55%; background-size: 5px 5px; background-repeat: no-repeat;
+  }
+
+  /* steps */
+  .steps { display: flex; gap: 6px; margin: 18px 0 16px; padding: 0; list-style: none; flex-wrap: wrap; }
+  .steps li { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted);
+              padding: 5px 12px 5px 6px; border-radius: 999px; background: var(--surface); }
+  .steps .n { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 11px;
+              font-weight: 700; background: var(--surface-2); color: var(--muted); }
+  .steps li.on { color: var(--text); background: var(--accent-soft); font-weight: 600; }
+  .steps li.on .n { background: var(--accent); color: var(--on-accent); }
+  .steps li.done .n { background: var(--accent-soft); color: var(--accent); }
+
+  .card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px;
+          box-shadow: var(--shadow); }
+  .stack > * + * { margin-top: 14px; }
+
+  /* specs */
+  .specs { display: flex; flex-wrap: wrap; gap: 8px; }
+  .spec { background: var(--surface); border-radius: var(--radius-sm); padding: 8px 12px; min-width: 0; }
+  .spec b { display: block; font-size: 15px; }
+  .spec span { font-size: 12px; color: var(--muted); }
+  .beta { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--warn);
+          background: var(--warn-soft); border-radius: 999px; padding: 2px 8px; }
+
+  /* drop zone */
+  .drop { display: block; border: 2px dashed var(--border); border-radius: var(--radius); padding: 30px 16px;
+          text-align: center; cursor: pointer; background: var(--surface); transition: border-color .15s, background .15s; }
+  .drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); }
+  .drop:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .drop input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .drop .icon { width: 44px; height: 44px; margin: 0 auto 10px; border-radius: 14px; display: grid; place-items: center;
+                background: var(--bg); color: var(--accent); }
+  .drop strong { font-size: 16px; }
+  .link { color: var(--accent); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+
+  /* buttons */
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+  button.btn {
+    font: inherit; font-weight: 650; border-radius: 999px; padding: 10px 18px; cursor: pointer; border: 1px solid transparent;
+    display: inline-flex; align-items: center; gap: 8px; min-height: 42px;
+  }
+  .btn.primary { background: var(--accent); color: var(--on-accent); }
+  .btn.primary:hover { background: var(--accent-hover); }
+  .btn.secondary { background: var(--bg); color: var(--text); border-color: var(--border); }
+  .btn.secondary:hover { background: var(--surface); }
+  .btn:disabled { opacity: .55; cursor: default; }
+  button:focus-visible, select:focus-visible, a:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+  /* progress */
+  .progress { height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+  .progress > div { height: 100%; width: 0; background: var(--accent); border-radius: 999px; transition: width .2s; }
+  .progress.busy > div { width: 35%; animation: slide 1.1s ease-in-out infinite; }
+  @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
+  @media (prefers-reduced-motion: reduce) { .progress.busy > div { animation: none; width: 100%; opacity: .5; } }
+
+  /* verdict */
+  .verdict { display: flex; gap: 14px; align-items: center; padding: 16px; border-radius: var(--radius); }
+  .verdict .badge { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; flex: none;
+                    font-size: 24px; font-weight: 800; color: #fff; }
+  .verdict.pass { background: var(--accent-soft); } .verdict.pass .badge { background: var(--accent); color: var(--on-accent); }
+  .verdict.warn { background: var(--warn-soft); }   .verdict.warn .badge { background: var(--warn); color: var(--bg); }
+  .verdict.fail { background: var(--error-soft); }  .verdict.fail .badge { background: var(--error); color: var(--bg); }
+  .verdict h2 { font-size: 19px; }
+  .time { font-variant-numeric: tabular-nums; }
+
+  /* preview */
+  .preview { border-radius: var(--radius); background: var(--surface); padding: 10px; }
+  .preview img { display: block; width: 100%; height: auto; border-radius: var(--radius-sm); }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; font-size: 13px; color: var(--muted); }
+  .legend i { display: inline-block; width: 22px; height: 0; vertical-align: middle; margin-right: 6px; border-top: 2px solid; }
+  .legend .cut { border-color: var(--text); }
+  .legend .bleed { border-top-style: dashed; border-color: #d62828; }
+  .legend .safe { border-top-style: dashed; border-color: #1e9646; }
+
+  /* issues */
+  .issues { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+  .issue { display: flex; gap: 12px; align-items: flex-start; border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; }
+  .issue .num { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; flex: none;
+                font-weight: 800; font-size: 13px; color: #fff; }
+  .issue.error .num { background: #d62828; } .issue.warn .num { background: #e89614; }
+  .issue p { margin-top: 1px; }
+  .tag { display: inline-block; margin-top: 6px; font-size: 12px; font-weight: 650; border-radius: 999px; padding: 2px 10px; }
+  .tag.fix { background: var(--accent-soft); color: var(--accent); }
+  .tag.human { background: var(--surface-2); color: var(--muted); }
+  .ok-line { display: flex; gap: 10px; align-items: center; color: var(--muted); }
+
+  /* before / after */
+  .ba { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .ba figure { margin: 0; }
+  .ba figcaption { font-size: 13px; font-weight: 650; color: var(--muted); margin-bottom: 6px; }
+  .changes { margin: 0; padding-left: 20px; }
+  .changes li + li { margin-top: 4px; }
+
+  .alert { border-radius: 14px; padding: 12px 14px; background: var(--error-soft); color: var(--text); }
+  .alert b { color: var(--error); }
+  .linkbox { word-break: break-all; font-size: 13px; background: var(--surface); padding: 10px 12px; border-radius: var(--radius-sm); }
+
+  footer { margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted);
+           display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+
+  @media (max-width: 520px) {
+    .wrap { padding: 16px 16px 12px; }
+    .ba { grid-template-columns: 1fr; }
+    .steps li { padding-right: 10px; }
+    .steps .label { display: none; }
+    .steps li.on .label { display: inline; }
+    .actions .btn { flex: 1 1 100%; justify-content: center; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="9" rx="2"/><path d="M7 14h10v7H7z"/><path d="m9.5 17.5 1.5 1.5 3.5-3.5"/></svg>
+      </div>
+      <h1>Print Preflight</h1>
+    </div>
+    <div class="product">
+      <label for="product" class="small muted">Product</label>
+      <select id="product"></select>
+    </div>
+  </header>
+
+  <ol class="steps" aria-label="Progress">
+    <li data-step="1"><span class="n">1</span><span class="label">Upload</span></li>
+    <li data-step="2"><span class="n">2</span><span class="label">Results</span></li>
+    <li data-step="3"><span class="n">3</span><span class="label">Fix</span></li>
+    <li data-step="4"><span class="n">4</span><span class="label">Order page</span></li>
+  </ol>
+
+  <main class="stack">
+    <!-- 1. upload -->
+    <section id="upload" class="card stack">
+      <div>
+        <h2>Check your print file</h2>
+        <p class="muted">We check size, bleed, resolution, colours, fonts and text near the edge — in about a second.</p>
+      </div>
+      <div class="specs" id="specs"></div>
+      <label class="drop" id="drop">
+        <input type="file" id="file" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg">
+        <div class="icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+        </div>
+        <strong>Drop your design here</strong>
+        <p class="muted">or <span class="link">choose a file</span></p>
+        <p class="small muted" id="limits">PDF, PNG or JPG · max 20 MB</p>
+      </label>
+      <div id="busy" class="stack hidden" aria-hidden="true">
+        <div class="progress" id="bar"><div></div></div>
+      </div>
+      <p id="status" class="muted small" role="status" aria-live="polite"></p>
+      <div id="error" class="alert hidden" role="alert"></div>
+    </section>
+
+    <!-- 2. results -->
+    <section id="results" class="card stack hidden" aria-labelledby="verdict-title">
+      <div id="verdict" class="verdict">
+        <div class="badge" id="verdict-icon" aria-hidden="true"></div>
+        <div>
+          <h2 id="verdict-title"></h2>
+          <p id="verdict-text"></p>
+          <p class="small muted"><span id="file-name"></span> · checked in <span class="time" id="seconds"></span></p>
+        </div>
+      </div>
+      <div class="preview" id="preview-box">
+        <img id="preview" alt="Your design with the cut line, bleed and safe zone drawn on it">
+        <div class="legend"><span><i class="cut"></i>Cut line</span><span><i class="bleed"></i>Bleed must reach here</span><span><i class="safe"></i>Keep text inside</span></div>
+      </div>
+      <div>
+        <h3 class="small muted" style="margin-bottom:8px">What we found</h3>
+        <ul class="issues" id="issues"></ul>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="fix-btn" type="button">Fix automatically</button>
+        <button class="btn secondary" id="order-btn" type="button">Go to the order page</button>
+        <button class="btn secondary" id="again-btn" type="button">Check another file</button>
+      </div>
+      <div id="fix-busy" class="stack hidden">
+        <div class="progress busy"><div></div></div>
+        <p class="muted small">Fixing your file…</p>
+      </div>
+      <div id="fix-error" class="alert hidden" role="alert"></div>
+    </section>
+
+    <!-- 3. fixed -->
+    <section id="fixed" class="card stack hidden" aria-labelledby="fixed-title">
+      <div id="fixed-verdict" class="verdict">
+        <div class="badge" id="fixed-icon" aria-hidden="true"></div>
+        <div>
+          <h2 id="fixed-title"></h2>
+          <p id="fixed-text"></p>
+        </div>
+      </div>
+      <div class="ba">
+        <figure><figcaption>Before</figcaption><div class="preview"><img id="before-img" alt="Your original design"></div></figure>
+        <figure><figcaption>After</figcaption><div class="preview"><img id="after-img" alt="The fixed design"></div></figure>
+      </div>
+      <div>
+        <h3 class="small muted" style="margin-bottom:6px">What we changed</h3>
+        <ul class="changes" id="changes"></ul>
+      </div>
+      <div id="left-box">
+        <h3 class="small muted" style="margin-bottom:8px">Still needs your designer</h3>
+        <ul class="issues" id="left"></ul>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="download-btn" type="button">Download fixed PDF</button>
+        <button class="btn secondary" id="order-btn-2" type="button">Go to the order page</button>
+        <button class="btn secondary" id="again-btn-2" type="button">Check another file</button>
+      </div>
+      <p id="link-fallback" class="linkbox hidden"></p>
+      <p class="small muted">The fixed file is a 300 dpi print image: text is no longer editable. For the best result, ask your designer to export again with 3 mm bleed. The download link works for 60 minutes.</p>
+    </section>
+  </main>
+
+  <footer>
+    <span>Unofficial prototype. Not affiliated with HelloPrint.</span>
+    <span>Files are deleted after 60 minutes.</span>
+  </footer>
+</div>
+
+<script>/*__EXT_APPS_SDK__*/</script>
+<script>
+(function () {
+  "use strict";
+  var SDK = globalThis.McpExtApps || {};
+  var CHUNK = 1024 * 1024;             // 1 MB per upload call: small enough for any host limit
+  var MAX_MB = 20;
+  var $ = function (id) { return document.getElementById(id); };
+
+  var state = { products: [], product: "business-card", fileId: null, fileName: "", report: null,
+                beforeImg: null, downloadUrl: null };
+
+  var DEFAULT_PRODUCTS = [
+    { product_id: "business-card", name: "Business cards, standard 85 x 55 mm", trim_mm: [85, 55], bleed_mm: 3, safe_margin_mm: 5, min_dpi: 300 },
+    { product_id: "flyer-a5", name: "Flyer A5 (148 x 210 mm)", trim_mm: [148, 210], bleed_mm: 3, safe_margin_mm: 5, min_dpi: 300, beta: true },
+    { product_id: "flyer-a6", name: "Flyer A6 (105 x 148 mm)", trim_mm: [105, 148], bleed_mm: 3, safe_margin_mm: 5, min_dpi: 300, beta: true }
+  ];
+
+  // ------------------------------------------------------------ host connection
+
+  var app = SDK.App ? new SDK.App({ name: "print-preflight-studio", version: "0.2.0" }, {}, { autoResize: true }) : null;
+
+  function applyTheme(ctx) {
+    if (!ctx) return;
+    if (ctx.theme === "dark" || ctx.theme === "light") document.documentElement.setAttribute("data-theme", ctx.theme);
+    try { if (ctx.styles && ctx.styles.variables && SDK.applyHostStyleVariables) SDK.applyHostStyleVariables(ctx.styles.variables); } catch (e) {}
+  }
+
+  if (app) {
+    app.ontoolresult = function (result) {
+      var s = result && result.structuredContent;
+      if (!s || !s.products) {
+        try { s = JSON.parse(((result && result.content) || []).find(function (c) { return c.type === "text"; }).text); }
+        catch (e) { s = null; }
+      }
+      if (s && s.products) setup(s.products, s.product_id, s.max_upload_mb);
+    };
+    app.onhostcontextchanged = applyTheme;
+    app.connect().then(function () { applyTheme(app.getHostContext()); })
+      .catch(function () { showError("Could not connect to Claude. Please reload the chat."); });
+  }
+  setup(DEFAULT_PRODUCTS, "business-card", MAX_MB);
+
+  function cleanError(text) {
+    return String(text || "Something went wrong.").replace(/^Error executing tool \w+:\s*/, "");
+  }
+
+  function callTool(name, args) {
+    if (!app) return Promise.reject(new Error("This panel only works inside Claude."));
+    return app.callServerTool({ name: name, arguments: args }).then(function (r) {
+      var text = (r.content || []).filter(function (c) { return c.type === "text"; }).map(function (c) { return c.text; });
+      if (r.isError) throw new Error(cleanError(text[0]));
+      var img = (r.content || []).find(function (c) { return c.type === "image"; });
+      var data = r.structuredContent && !Array.isArray(r.structuredContent.result) && !r.structuredContent.result
+        ? r.structuredContent : (text[0] ? JSON.parse(text[0]) : {});
+      return { data: data, image: img ? "data:" + img.mimeType + ";base64," + img.data : null };
+    });
+  }
+
+  function tellClaude(text) {
+    if (!app || !app.updateModelContext) return;
+    app.updateModelContext({ content: [{ type: "text", text: text }] }).catch(function () {});
+  }
+
+  function openUrl(url) {
+    if (!app) { window.open(url, "_blank", "noopener"); return Promise.resolve(true); }
+    return app.openLink({ url: url }).then(function (r) { return !(r && r.isError); }).catch(function () { return false; });
+  }
+
+  // ------------------------------------------------------------ product + specs
+
+  function setup(products, productId, maxMb) {
+    state.products = products;
+    if (productId) state.product = productId;
+    if (maxMb) { MAX_MB = maxMb; $("limits").textContent = "PDF, PNG or JPG · max " + maxMb + " MB"; }
+    var sel = $("product");
+    sel.innerHTML = "";
+    products.forEach(function (p) {
+      var o = document.createElement("option");
+      o.value = p.product_id;
+      o.textContent = p.name + (p.beta ? " (beta)" : "");
+      sel.appendChild(o);
+    });
+    sel.value = state.product;
+    renderSpecs();
+  }
+
+  function current() {
+    return state.products.find(function (p) { return p.product_id === state.product; }) || state.products[0];
+  }
+
+  function renderSpecs() {
+    var p = current();
+    var t = p.trim_mm;
+    var items = [
+      [t[0] + " × " + t[1] + " mm", "Final size"],
+      [p.bleed_mm + " mm", "Bleed on every side"],
+      [p.safe_margin_mm + " mm", "Keep text this far inside"],
+      [p.min_dpi + " dpi", "Pictures at least"]
+    ];
+    $("specs").innerHTML = items.map(function (i) {
+      return '<div class="spec"><b>' + esc(i[0]) + "</b><span>" + esc(i[1]) + "</span></div>";
+    }).join("") + (p.beta ? '<div class="spec"><span class="beta">beta</span><span style="display:block;margin-top:4px">Best tested on business cards</span></div>' : "");
+  }
+
+  $("product").addEventListener("change", function (e) {
+    state.product = e.target.value;
+    renderSpecs();
+    if (state.fileId) runCheck();
+  });
+
+  // ------------------------------------------------------------ steps
+
+  function step(n) {
+    document.querySelectorAll(".steps li").forEach(function (li) {
+      var s = Number(li.dataset.step);
+      li.classList.toggle("on", s === n);
+      li.classList.toggle("done", s < n);
+      if (s === n) li.setAttribute("aria-current", "step"); else li.removeAttribute("aria-current");
+    });
+  }
+  step(1);
+
+  // ------------------------------------------------------------ upload
+
+  var drop = $("drop");
+  ["dragenter", "dragover"].forEach(function (ev) {
+    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add("over"); });
+  });
+  ["dragleave", "drop"].forEach(function (ev) {
+    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove("over"); });
+  });
+  drop.addEventListener("drop", function (e) {
+    var f = e.dataTransfer && e.dataTransfer.files[0];
+    if (f) handleFile(f);
+  });
+  $("file").addEventListener("change", function (e) {
+    var f = e.target.files[0];
+    e.target.value = "";
+    if (f) handleFile(f);
+  });
+
+  function setStatus(text) { $("status").textContent = text || ""; }
+  function showError(text) { var el = $("error"); el.innerHTML = "<b>Sorry.</b> " + esc(text); el.classList.remove("hidden"); }
+  function clearError() { $("error").classList.add("hidden"); }
+  function setBusy(on, pct) {
+    $("busy").classList.toggle("hidden", !on);
+    drop.classList.toggle("hidden", on);
+    var bar = $("bar");
+    bar.classList.toggle("busy", pct == null);
+    bar.firstElementChild.style.width = pct == null ? "" : Math.round(pct) + "%";
+  }
+
+  function readChunk(blob) {
+    return new Promise(function (resolve, reject) {
+      var r = new FileReader();
+      r.onload = function () { resolve(String(r.result).split(",")[1] || ""); };
+      r.onerror = function () { reject(new Error("Could not read the file.")); };
+      r.readAsDataURL(blob);
+    });
+  }
+
+  function withRetry(fn, tries) {
+    return fn().catch(function (e) {
+      if (tries <= 1 || /too large|not a PDF|not valid/i.test(e.message)) throw e;
+      return new Promise(function (r) { setTimeout(r, 800); }).then(function () { return withRetry(fn, tries - 1); });
+    });
+  }
+
+  function handleFile(file) {
+    clearError();
+    var okType = /\.(pdf|png|jpe?g)$/i.test(file.name) || /^(application\/pdf|image\/(png|jpeg))$/.test(file.type);
+    if (!okType) { showError("This is not a PDF, PNG or JPG file. Please choose one of those."); return; }
+    if (file.size > MAX_MB * 1024 * 1024) { showError("This file is too large — the maximum is " + MAX_MB + " MB."); return; }
+    if (file.size === 0) { showError("This file is empty."); return; }
+
+    state.fileName = file.name;
+    $("results").classList.add("hidden");
+    $("fixed").classList.add("hidden");
+    step(1);
+    setBusy(true, 0);
+    setStatus("Uploading " + file.name + "…");
+
+    var uploadId = "", offset = 0;
+    function next() {
+      var part = file.slice(offset, offset + CHUNK);
+      var final = offset + part.size >= file.size;
+      return readChunk(part).then(function (b64) {
+        return withRetry(function () {
+          return callTool("upload_chunk", { data_base64: b64, offset: offset, upload_id: uploadId,
+                                            filename: file.name, final: final });
+        }, 3);
+      }).then(function (res) {
+        if (final) return res.data;
+        uploadId = res.data.upload_id;
+        offset = res.data.received_bytes;
+        setBusy(true, offset / file.size * 100);
+        return next();
+      });
+    }
+    next().then(function (done) {
+      state.fileId = done.file_id;
+      runCheck();
+    }).catch(function (e) {
+      setBusy(false);
+      setStatus("");
+      showError(e.message);
+    });
+  }
+
+  // ------------------------------------------------------------ check
+
+  var ICON = { pass: "✓", warn: "!", fail: "✕" };
+  var TITLE = { pass: "Ready to print", warn: "Check the warnings", fail: "Needs fixing" };
+  var SENTENCE = {
+    pass: "We found no problems for this product.",
+    warn: "It can be printed, but please look at the points below first.",
+    fail: "Printing it like this would likely give a bad result. See what to fix below."
+  };
+
+  function runCheck() {
+    clearError();
+    setBusy(true, null);
+    setStatus("Checking your file…");
+    callTool("check_artwork", { file_id: state.fileId, product_id: state.product }).then(function (res) {
+      setBusy(false);
+      setStatus("");
+      state.report = res.data;
+      state.beforeImg = res.image;
+      showResults(res.data, res.image);
+    }).catch(function (e) {
+      setBusy(false);
+      setStatus("");
+      showError(e.message);
+    });
+  }
+
+  function issueItem(i) {
+    var tag = i.fixable ? '<span class="tag fix">Fixable automatically</span>' : '<span class="tag human">Needs your designer</span>';
+    return '<li class="issue ' + esc(i.severity) + '"><span class="num" aria-label="Issue ' + i.n + '">' + i.n +
+      "</span><div><p>" + esc(i.message) + "</p>" + tag + "</div></li>";
+  }
+
+  function showVerdict(prefix, verdict) {
+    var box = $(prefix === "fixed" ? "fixed-verdict" : "verdict");
+    box.className = "verdict " + verdict;
+    $(prefix === "fixed" ? "fixed-icon" : "verdict-icon").textContent = ICON[verdict];
+  }
+
+  function showResults(r, img) {
+    var cantOpen = (r.findings || []).some(function (f) { return f.check === "file" && f.severity === "error"; });
+    showVerdict("results", r.verdict);
+    $("verdict-title").textContent = cantOpen ? "We can't check this file" : TITLE[r.verdict];
+    $("verdict-text").textContent = cantOpen ? "A person should look at it, or try another file." : SENTENCE[r.verdict];
+    $("file-name").textContent = state.fileName;
+    $("seconds").textContent = (r.seconds < 0.1 ? r.seconds.toFixed(2) : r.seconds.toFixed(1)) + " s";
+    $("preview-box").classList.toggle("hidden", !img);
+    if (img) $("preview").src = img;
+    var issues = r.numbered_issues || [];
+    $("issues").innerHTML = issues.length ? issues.map(issueItem).join("")
+      : '<li class="ok-line">✓ Size, bleed, resolution, colours, fonts and text all look good.</li>';
+    var fixable = issues.some(function (i) { return i.fixable; });
+    $("fix-btn").classList.toggle("hidden", !fixable || cantOpen);
+    $("fix-error").classList.add("hidden");
+    $("results").classList.remove("hidden");
+    $("fixed").classList.add("hidden");
+    step(2);
+    $("results").scrollIntoView({ behavior: "smooth", block: "start" });
+
+    var lines = issues.map(function (i) {
+      return i.n + ". [" + i.severity + (i.fixable ? ", fixable automatically" : ", needs the designer") + "] " + i.message;
+    });
+    tellClaude("Print Preflight checked \"" + state.fileName + "\" as " + current().name + ": " +
+      r.verdict_text + " (" + r.verdict + ").\n" + (lines.length ? lines.join("\n") : "No problems found.") +
+      "\nfile_id=" + state.fileId + ", product_id=" + state.product +
+      ". The customer can press \"Fix automatically\" in the panel, or you can call fix_artwork with these ids.");
+  }
+
+  // ------------------------------------------------------------ fix
+
+  $("fix-btn").addEventListener("click", function () {
+    var btn = $("fix-btn");
+    btn.disabled = true;
+    $("fix-busy").classList.remove("hidden");
+    $("fix-error").classList.add("hidden");
+    callTool("fix_artwork", { file_id: state.fileId, product_id: state.product }).then(function (res) {
+      $("fix-busy").classList.add("hidden");
+      btn.disabled = false;
+      showFixed(res.data, res.image);
+    }).catch(function (e) {
+      $("fix-busy").classList.add("hidden");
+      btn.disabled = false;
+      var el = $("fix-error");
+      el.innerHTML = "<b>Sorry.</b> " + esc(e.message);
+      el.classList.remove("hidden");
+    });
+  });
+
+  function showFixed(f, img) {
+    var after = f.report_after || {};
+    showVerdict("fixed", f.verdict_after);
+    $("fixed-title").textContent = f.verdict_after === "pass" ? "Fixed — ready to print"
+      : f.verdict_after === "warn" ? "Fixed — check the remaining warnings" : "Partly fixed";
+    $("fixed-text").textContent = f.verdict_after === "pass"
+      ? "Everything we could fix is fixed, and nothing else needs attention."
+      : "We fixed what is safe to fix. The points below need a decision from you or your designer.";
+    $("before-img").src = state.beforeImg || "";
+    $("after-img").src = img || "";
+    $("changes").innerHTML = (f.changes || []).map(function (c) { return "<li>" + esc(c) + "</li>"; }).join("");
+    var left = after.numbered_issues || [];
+    $("left-box").classList.toggle("hidden", !left.length);
+    $("left").innerHTML = left.map(issueItem).join("");
+    state.downloadUrl = f.download_url;
+    $("link-fallback").classList.add("hidden");
+    $("fixed").classList.remove("hidden");
+    step(3);
+    $("fixed").scrollIntoView({ behavior: "smooth", block: "start" });
+    tellClaude("Print Preflight fixed the file: " + f.verdict_before + " -> " + f.verdict_after + ".\nChanges: " +
+      (f.changes || []).join(" ") + "\nStill needs the designer: " +
+      (left.length ? left.map(function (i) { return i.message; }).join(" ") : "nothing") +
+      "\nDownload (60 minutes): " + f.download_url);
+  }
+
+  $("download-btn").addEventListener("click", function () {
+    var url = state.downloadUrl;
+    if (!url) return;
+    openUrl(url).then(function (ok) {
+      if (!ok) {
+        var el = $("link-fallback");
+        el.textContent = "Copy this link into your browser to download: " + url;
+        el.classList.remove("hidden");
+      }
+    });
+  });
+
+  // ------------------------------------------------------------ order page + restart
+
+  function goOrder() {
+    callTool("build_product_link", { product_id: state.product }).then(function (res) {
+      step(4);
+      return openUrl(res.data.url);
+    }).catch(function (e) { showError(e.message); });
+  }
+  $("order-btn").addEventListener("click", goOrder);
+  $("order-btn-2").addEventListener("click", goOrder);
+
+  function again() {
+    state.fileId = null;
+    $("results").classList.add("hidden");
+    $("fixed").classList.add("hidden");
+    clearError();
+    step(1);
+    $("upload").scrollIntoView({ behavior: "smooth", block: "start" });
+    $("file").focus();
+  }
+  $("again-btn").addEventListener("click", again);
+  $("again-btn-2").addEventListener("click", again);
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+})();
+</script>
+</body>
+</html>

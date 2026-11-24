@@ -5,6 +5,8 @@ Differences from the local server (server.py):
 - Only the products we test best are offered (HOSTED_PRODUCTS).
 - Heavy work (render, check, fix) runs one job at a time, so memory stays predictable on a small server.
 - The fixed PDF is returned as a short-lived download link.
+- An MCP App, "Preflight Studio" (ui://preflight/studio.html), lets the customer upload, check and fix
+  inside the chat. upload_chunk is visible to that app only, not to the model.
 
 Run locally:  uvicorn mcp_server.http_app:app --port 8000
 Endpoint:     /mcp (MCP), /health, /files/<id>/<name>.pdf (fixed files)
@@ -17,8 +19,12 @@ import binascii
 import io
 import logging
 import os
+import re
 import threading
+from pathlib import Path
+from typing import Any
 
+from mcp.server.apps import Apps
 from mcp.server.mcpserver import Image, MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 from mcp.server.transport_security import TransportSecuritySettings
@@ -30,24 +36,36 @@ from mcp_server.common import INSTRUCTIONS, product_or_error, register_catalog_t
 from preflight.fixes import fix_artwork as _fix
 from preflight.preview import render_preview
 from preflight.report import check_after_fix, check_file
+from preflight.specs import get_product
 
 VERSION = "0.2.0"
 HOSTED_PRODUCTS = ("business-card", "flyer-a5", "flyer-a6")
+BETA_PRODUCTS = ("flyer-a5", "flyer-a6")
 MAX_CHUNK_BYTES = 2 * 1024 * 1024  # decoded; ~2.7 MB as base64, well under the request limit
 BUSY_TIMEOUT_S = 90
 PREVIEW_PX = 900
+STUDIO_URI = "ui://preflight/studio.html"
+UI_DIR = Path(__file__).resolve().parent / "ui"
 
 log = logging.getLogger("print-preflight")
 _heavy = threading.Lock()  # sync tools run in worker threads; one render/fix at a time
 
-server = MCPServer(
-    "print-preflight",
-    instructions=INSTRUCTIONS + (
-        " Online demo: upload the file with upload_chunk (base64, in order) to get a file_id, "
-        f"then check_artwork(file_id, product_id). Products: {', '.join(HOSTED_PRODUCTS)}."
-    ),
-)
-register_catalog_tools(server, HOSTED_PRODUCTS)
+
+def studio_html() -> str:
+    """The Studio page with the MCP Apps SDK inlined (the app iframe may not load external scripts).
+
+    The SDK bundle is an ES module ending in `export{a as B,...}`; we turn that into a global
+    (window.McpExtApps) so a plain inline script can use it.
+    """
+    sdk = (UI_DIR / "vendor" / "ext-apps-2.0.4.js").read_text(encoding="utf-8")
+    m = re.search(r"export\{([^}]*)\};?\s*$", sdk)
+    if not m:
+        raise RuntimeError("Unexpected ext-apps bundle format")
+    pairs = [p.strip().split(" as ") for p in m.group(1).split(",")]
+    exports = ",".join(f"{alias}:{local}" for local, alias in pairs)
+    sdk = sdk[: m.start()] + f"globalThis.McpExtApps={{{exports}}};"
+    page = (UI_DIR / "studio.html").read_text(encoding="utf-8")
+    return page.replace("/*__EXT_APPS_SDK__*/", sdk.replace("</script", "<\\/script"))
 
 
 def public_url() -> str:
@@ -82,9 +100,43 @@ def _preview(path, product, findings) -> Image | None:
     return Image(data=buf.getvalue(), format="png")
 
 
-@server.tool()
+# ---------------------------------------------------------------- MCP App: Preflight Studio
+
+apps = Apps()
+apps.add_html_resource(
+    STUDIO_URI,
+    studio_html(),
+    title="Print Preflight",
+    description="Upload a print file, see the check and the preview, fix it and download the result.",
+    prefers_border=True,
+)
+
+
+@apps.tool(resource_uri=STUDIO_URI, title="Open Print Preflight", structured_output=True)
+def open_preflight_studio(product_id: str = "business-card") -> dict[str, Any]:
+    """Open Print Preflight, an interactive panel in the chat where the customer uploads a print file
+    (PDF, PNG or JPG) and sees the check, an annotated preview and an automatic fix.
+
+    Use this whenever the customer wants to check or fix a design file: they cannot attach files to
+    this tool any other way. Call find_product first if the product is unclear.
+    """
+    p = product_or_error(product_id, HOSTED_PRODUCTS)
+    return {
+        "product_id": p.id,
+        "products": [
+            {"product_id": q.id, "name": q.name, "trim_mm": list(q.trim_mm), "bleed_mm": q.spec.bleed_mm,
+             "safe_margin_mm": q.spec.safe_warn_mm, "min_dpi": q.spec.dpi_min, "beta": q.id in BETA_PRODUCTS}
+            for q in map(get_product, HOSTED_PRODUCTS)
+        ],
+        "max_upload_mb": storage.MAX_BYTES // (1024 * 1024),
+        "note": "The panel is open. Ask the customer to upload their file in it; "
+                "results are shared with you when the check is done.",
+    }
+
+
+@apps.tool(resource_uri=STUDIO_URI, visibility=["app"], structured_output=True)
 def upload_chunk(data_base64: str, offset: int = 0, upload_id: str = "", filename: str = "artwork",
-                 final: bool = False) -> dict:
+                 final: bool = False) -> dict[str, Any]:
     """Upload a print file (PDF, PNG or JPG, max 20 MB) in base64 chunks of at most 2 MB.
 
     First call: no upload_id, offset 0. Next calls: the upload_id you got and offset = bytes sent so far.
@@ -108,9 +160,23 @@ def upload_chunk(data_base64: str, offset: int = 0, upload_id: str = "", filenam
             "size_bytes": size}
 
 
+# ---------------------------------------------------------------- server and tools
+
+server = MCPServer(
+    "print-preflight",
+    instructions=INSTRUCTIONS + (
+        " Online demo: to check a customer's file, call open_preflight_studio; the customer uploads the file "
+        "in that panel and the results are shared with you. "
+        f"Products: {', '.join(HOSTED_PRODUCTS)}."
+    ),
+    extensions=[apps],
+)
+register_catalog_tools(server, HOSTED_PRODUCTS)
+
+
 @server.tool()
 def check_artwork(file_id: str, product_id: str) -> list:
-    """Check an uploaded print file (file_id from upload_chunk) for a product.
+    """Check an uploaded print file (file_id from the Print Preflight panel) for a product.
 
     Returns the report (verdict + numbered issues in plain English) and an annotated preview image:
     black line = cut line, red dashed = where bleed must reach, green dashed = safe zone.
