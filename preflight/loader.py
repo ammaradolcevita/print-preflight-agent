@@ -6,6 +6,7 @@ whether the customer uploaded a PDF from InDesign or a PNG from Canva.
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pymupdf
@@ -64,15 +65,24 @@ def _load_pdf(path: Path) -> Artwork:
 
     pages: list[Page] = []
     for i, pg in enumerate(doc):
-        rect = pg.rect  # the visible page (CropBox), in points
+        rect = pg.rect  # the visible page (CropBox), in points, already turned by /Rotate
+        # TrimBox, text and image positions come in unrotated page coordinates; turn them like the page.
+        rot = pg.rotation_matrix
+
+        def to_mm(r, rot=rot, rect=rect) -> Box:
+            return _rect_to_mm(pymupdf.Rect(r) * rot, rect)
+
         trim_box = None
-        trim = pg.trimbox
+        # pg.trimbox is in MediaBox space (x keeps a MediaBox offset, as Illustrator writes);
+        # text and images are relative to the visible page, so move the TrimBox there first.
+        tb, cb = pg.trimbox, pg.cropbox
+        trim = pymupdf.Rect(tb.x0 - cb.x0, tb.y0 - cb.y0, tb.x1 - cb.x0, tb.y1 - cb.y0) * rot
         if abs(trim.width - rect.width) > 0.5 or abs(trim.height - rect.height) > 0.5:
             trim_box = _rect_to_mm(trim, rect)
 
         images = []
         for info in pg.get_image_info(xrefs=True):
-            bbox = _rect_to_mm(info["bbox"], rect)
+            bbox = to_mm(info["bbox"])
             images.append(
                 ImageInfo(
                     width_px=int(info["width"]),
@@ -90,7 +100,7 @@ def _load_pdf(path: Path) -> Artwork:
                         spans.append(
                             TextSpan(
                                 text=span["text"],
-                                bbox_mm=_rect_to_mm(span["bbox"], rect),
+                                bbox_mm=to_mm(span["bbox"]),
                                 size_pt=float(span["size"]),
                                 font=span["font"],
                             )
@@ -113,8 +123,33 @@ def _load_pdf(path: Path) -> Artwork:
                 fonts=fonts,
             )
         )
+    spots = _spot_colours(doc)
     doc.close()
-    return Artwork(path=str(path), kind="pdf", pages=pages)
+    return Artwork(path=str(path), kind="pdf", pages=pages, spot_colours=spots)
+
+
+# Separation names that are not real inks: "All" is the registration colour crop marks use.
+_NOT_INKS = {"All", "None", "Cyan", "Magenta", "Yellow", "Black"}
+_SEPARATION = re.compile(r"/Separation\s*/([^\s/\[\]<>()]+)")
+_DEVICE_N = re.compile(r"/DeviceN\s*\[([^\]]*)\]")
+
+
+def _pdf_name(raw: str) -> str:
+    return re.sub(r"#([0-9A-Fa-f]{2})", lambda m: chr(int(m.group(1), 16)), raw)
+
+
+def _spot_colours(doc) -> list[str]:
+    """Named spot inks used anywhere in the PDF (they print in CMYK unless agreed otherwise)."""
+    names: set[str] = set()
+    for xref in range(1, doc.xref_length()):
+        try:
+            obj = doc.xref_object(xref, compressed=True)
+        except Exception:  # noqa: BLE001 - a damaged object is not a reason to fail the whole check
+            continue
+        names.update(_pdf_name(n) for n in _SEPARATION.findall(obj))
+        for group in _DEVICE_N.findall(obj):
+            names.update(_pdf_name(n) for n in re.findall(r"/([^\s/\[\]]+)", group))
+    return sorted(names - _NOT_INKS)
 
 
 # ---------------------------------------------------------------- PNG / JPG
@@ -136,8 +171,14 @@ def _load_raster(path: Path, product: Product) -> Artwork:
             img.load()
             w_px, h_px = img.size
             mode = img.mode
+            camera = _camera(img)
     except Exception as exc:
         raise LoadError("This image could not be opened. It may be damaged.") from exc
+    if camera:
+        raise LoadError(
+            f"This looks like a camera photo ({camera}), not a design file. A photo of a printed card "
+            "can't be checked reliably. Please upload the file you designed (PDF, or a PNG/JPG export)."
+        )
 
     colour = {"RGB": "RGB", "RGBA": "RGB", "P": "RGB", "CMYK": "CMYK", "L": "Gray", "1": "Gray"}.get(
         mode, "Other"
@@ -159,6 +200,22 @@ def _load_raster(path: Path, product: Product) -> Artwork:
     image = ImageInfo(width_px=w_px, height_px=h_px, bbox_mm=(0, 0, page_w, page_h), colour=colour)
     page = Page(index=0, width_mm=page_w, height_mm=page_h, images=[image])
     return Artwork(path=str(path), kind="raster", pages=[page])
+
+
+# EXIF tags only a camera writes: ExposureTime, FNumber, ISO (in the Exif sub-IFD).
+_CAMERA_TAGS = (33434, 33437, 34855)
+
+
+def _camera(img: Image.Image) -> str | None:
+    """'Apple iPhone 15' when the picture was taken with a camera, else None."""
+    try:
+        exif = img.getexif()
+        shot = exif.get_ifd(0x8769)
+    except Exception:  # noqa: BLE001
+        return None
+    if not any(t in shot for t in _CAMERA_TAGS):
+        return None
+    return " ".join(str(exif.get(t, "")).strip() for t in (271, 272)).strip() or "camera"
 
 
 def render_page_rgb(path: str | Path, page_index: int = 0, dpi: int = 72) -> Image.Image:

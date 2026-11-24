@@ -93,6 +93,7 @@ class Artwork:
     path: str
     kind: Literal["pdf", "raster"]
     pages: list[Page]
+    spot_colours: list[str] = field(default_factory=list)  # named inks (Separation/DeviceN), e.g. PANTONE 286 C
 
 
 @dataclass
