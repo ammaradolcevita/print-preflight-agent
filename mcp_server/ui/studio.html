@@ -84,6 +84,10 @@
   .drop strong { font-size: 16px; display: block; }
   .link { color: var(--accent); font-weight: 600; }
   .specline { font-size: 13px; color: var(--muted); }
+  .samples { font-size: 13px; color: var(--muted); text-align: center; margin-top: 12px; }
+  .chip { background: none; border: 0; padding: 4px 6px; color: var(--accent); font-weight: 650; font-size: 13px;
+          text-decoration: underline; text-underline-offset: 3px; text-decoration-color: transparent; }
+  .chip:hover { text-decoration-color: currentColor; }
   .specline b { color: var(--text); font-weight: 600; }
   .beta { font-size: 11px; font-weight: 700; color: var(--warn); background: var(--warn-soft); border-radius: 99px;
           padding: 1px 8px; margin-left: 4px; vertical-align: 1px; }
@@ -193,6 +197,10 @@
         <span class="muted">or <span class="link">choose a file</span></span>
         <span class="small muted" style="display:block;margin-top:6px" id="limits">PDF, PNG or JPG · max 20 MB</span>
       </label>
+      <p class="samples" id="samples">No file at hand? Try a sample:
+        <button class="chip" type="button" data-sample="missing_bleed">Missing bleed</button>·
+        <button class="chip" type="button" data-sample="with_mistakes">With mistakes</button>·
+        <button class="chip" type="button" data-sample="print_ready">Print-ready</button></p>
       <p class="specline" id="specs"></p>
       <div id="busy" class="hidden" aria-hidden="true"><div class="progress" id="bar"><div></div></div></div>
       <p id="status" class="muted small" role="status" aria-live="polite"></p>
@@ -407,6 +415,7 @@
   function setBusy(on, pct) {
     $("busy").classList.toggle("hidden", !on);
     drop.classList.toggle("hidden", on);
+    $("samples").classList.toggle("hidden", on);
     var bar = $("bar");
     bar.classList.toggle("busy", pct == null);
     bar.firstElementChild.style.width = pct == null ? "" : Math.round(pct) + "%";
@@ -468,6 +477,28 @@
       showError(e.message);
     });
   }
+
+  // ------------------------------------------------------------ try a sample
+
+  document.querySelectorAll("[data-sample]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      clearError();
+      state.product = "business-card";   // the samples are business cards
+      $("product").value = state.product;
+      renderSpecs();
+      setBusy(true, null);
+      setStatus("Loading the sample…");
+      callTool("load_sample", { sample: btn.dataset.sample }).then(function (res) {
+        state.fileId = res.data.file_id;
+        state.fileName = res.data.file_name;
+        runCheck();
+      }).catch(function (e) {
+        setBusy(false);
+        setStatus("");
+        showError(e.message);
+      });
+    });
+  });
 
   // ------------------------------------------------------------ check
 

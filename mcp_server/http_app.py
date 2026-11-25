@@ -46,6 +46,12 @@ BUSY_TIMEOUT_S = 90
 PREVIEW_PX = 900
 STUDIO_URI = "ui://preflight/studio.html"
 UI_DIR = Path(__file__).resolve().parent / "ui"
+SAMPLES_DIR = Path(__file__).resolve().parent.parent / "samples"
+SAMPLES = {  # "Try a sample" in the panel: our own business cards, no customer file needed
+    "missing_bleed": "sample_missing_bleed.pdf",
+    "with_mistakes": "sample_with_mistakes.pdf",
+    "print_ready": "sample_print_ready.pdf",
+}
 
 log = logging.getLogger("print-preflight")
 _heavy = threading.Lock()  # sync tools run in worker threads; one render/fix at a time
@@ -158,6 +164,15 @@ def upload_chunk(data_base64: str, offset: int = 0, upload_id: str = "", filenam
     log.info("upload finished: %s, %d bytes", stored.kind, size)
     return {"file_id": stored.file_id, "file_name": stored.display_name, "kind": stored.kind,
             "size_bytes": size}
+
+
+@apps.tool(resource_uri=STUDIO_URI, visibility=["app"], structured_output=True)
+def load_sample(sample: str = "missing_bleed") -> dict[str, Any]:
+    """Load one of the demo business cards (missing_bleed, with_mistakes, print_ready) as if it was uploaded."""
+    if sample not in SAMPLES:
+        raise ToolError(f"Unknown sample. Choose one of: {', '.join(SAMPLES)}.")
+    stored = storage.store_copy(SAMPLES_DIR / SAMPLES[sample], Path(SAMPLES[sample]).stem)
+    return {"file_id": stored.file_id, "file_name": SAMPLES[sample], "product_id": "business-card"}
 
 
 # ---------------------------------------------------------------- server and tools

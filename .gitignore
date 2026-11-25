@@ -14,3 +14,4 @@ BRIEF_hosted_mcp_app.md
 .env
 eval/realworld/files/
 .preview/
+.DS_Store

@@ -128,17 +128,26 @@ def finish_upload(upload_id: str) -> Stored:
     return Stored(upload_id, path, kind, meta["name"])
 
 
-def store_output(source: Path, display_name: str) -> Stored:
-    """Keep a generated file (the fixed PDF) under a new id so it can be downloaded."""
+def _store(source: Path, display_name: str, *, output: bool, move: bool) -> Stored:
     sweep()
     file_id = secrets.token_urlsafe(24)
     folder = ROOT / file_id
     folder.mkdir(parents=True)
     path = folder / "artwork.pdf"
-    shutil.move(str(source), path)
+    (shutil.move if move else shutil.copyfile)(str(source), path)
     _write_meta(folder, {"created": time.time(), "name": _safe_name(display_name), "state": "ready",
-                         "kind": "pdf", "output": True})
+                         "kind": "pdf", "output": output})
     return Stored(file_id, path, "pdf", _safe_name(display_name))
+
+
+def store_output(source: Path, display_name: str) -> Stored:
+    """Keep a generated file (the fixed PDF) under a new id so it can be downloaded."""
+    return _store(source, display_name, output=True, move=True)
+
+
+def store_copy(source: Path, display_name: str) -> Stored:
+    """A copy of one of our own PDFs (a demo sample), treated like an upload: checkable, not downloadable."""
+    return _store(source, display_name, output=False, move=False)
 
 
 def get(file_id: str, *, output_only: bool = False) -> Stored:

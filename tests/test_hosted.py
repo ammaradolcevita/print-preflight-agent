@@ -197,3 +197,19 @@ def test_instructions_ask_for_short_replies(client):
     text = init["instructions"]
     assert "open_preflight_studio" in text and "keep your chat replies short" in text
     assert "No tables" in text
+
+
+@pytest.mark.parametrize("sample,verdict", [("missing_bleed", "fail"), ("with_mistakes", "fail"),
+                                            ("print_ready", "pass")])
+def test_try_a_sample(client, sample, verdict):
+    tools = {t["name"]: t for t in rpc(client, "tools/list", {})["tools"]}
+    assert tools["load_sample"]["_meta"]["ui"]["visibility"] == ["app"]
+    loaded = call(client, "load_sample", {"sample": sample})["structuredContent"]
+    report = first_json(call(client, "check_artwork", {"file_id": loaded["file_id"], "product_id": "business-card"}))
+    assert report["verdict"] == verdict
+    assert client.get(f"/files/{loaded['file_id']}/x.pdf").status_code == 404  # samples are not "downloads"
+
+
+def test_unknown_sample(client):
+    res = call(client, "load_sample", {"sample": "../../etc/passwd"})
+    assert res["isError"] and "Unknown sample" in res["content"][0]["text"]
