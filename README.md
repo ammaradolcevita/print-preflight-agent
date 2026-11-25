@@ -1,136 +1,83 @@
-# 🖨️ Print Preflight Agent
-**[▶ Try the live demo](https://print-preflight.streamlit.app)**
+# 🖨️ Print Preflight
 
-**Checks a print file before you order, in about 0.1 seconds.** It explains every problem in plain language, fixes what is safe to fix, and also works from inside an AI assistant (MCP).
+**Checks a print file before you order, in about a second, right inside Claude.** It shows what's wrong on the design, fixes what is safe to fix, and leaves the rest to the designer.
 
-![Before and after automatic fix](docs/before_after.png)
-*Left: a business card with nine problems. Right: after the one-click fix, bleed and colours are fixed, and what needs the designer is still listed. Black = cut line · red dashed = where bleed must reach · green dashed = safe zone.*
+**[▶ Short video (under 2 minutes)](https://youtu.be/nXj7WTZwT0E)** · **Use it in Claude:** `https://print-preflight.onrender.com/mcp`
 
-> Unofficial prototype built as a job application. Not affiliated with or endorsed by HelloPrint. It never places orders.
+<table>
+<tr>
+<td width="50%"><img src="docs/claude-panel.png" alt="The Print Preflight panel opens inside a Claude chat"><br><b>1. Ask in plain words.</b> Claude opens the app in the chat; upload a file or pick a sample.</td>
+<td width="50%"><img src="docs/claude-explains.png" alt="Claude explains the issues in simple words"><br><b>2. Ask what it means.</b> The app measures, Claude explains: what one click fixes, what needs the designer.</td>
+</tr>
+<tr>
+<td><img src="docs/claude-flyer.png" alt="A second panel for an A5 flyer in the same chat"><br><b>3. Next product, same chat.</b> "Can I check my flyer too?" opens the app for an A5 flyer.</td>
+<td><img src="docs/claude-summary.png" alt="Claude sends both fixed files and a summary of what is left"><br><b>4. Everything in one place.</b> Links to both fixed files and an honest summary of what is still left.</td>
+</tr>
+</table>
 
-## The problem
+> A demo prototype, built as a personal project. Not affiliated with any company, and it never places orders.
 
-In HelloPrint's cart (NL site, checked 18 Nov 2026):
+## Use it in Claude
 
-- *"You can upload your files after placing your order."* The customer cannot check the file before buying.
-- The file check is a paid add-on: *"Check my files. + €7.00. Did you know that our design experts still find errors in 40% of all files?"* On a €16.79 order of 250 business cards, that is 42% on top.
+1. In Claude (desktop or claude.ai in a browser): **Settings → Connectors → Add custom connector**.
+2. URL: `https://print-preflight.onrender.com/mcp` (no sign-in).
+3. In a new chat: *"I need 250 matte business cards. Can you check my design with Print Preflight?"*
 
-And on their public pages:
-- the free **basic check** is an *"automated review of your artwork's resolution, size, and color settings"*;
-- the expert check *"starts only once we have received your payment"*;
-- *"we don't check grammar and spelling"*.
+A panel opens in the chat: upload a PDF/PNG/JPG or pick a sample, and you get the verdict, an interactive preview, one-click fixes and an order summary. Ask Claude anything about the result.
+*Claude's mobile app does not show app panels yet; Team/Enterprise: an Owner adds connectors.*
 
-**If 40% of files have errors, an instant, free check before checkout is worth building.** A typo in an email address, or a phone number half cut off at the edge, on 500 business cards is exactly the mistake a customer notices too late.
+## What's new in v0.2
 
-Sources: [artwork check](https://www.helloprint.com/en-us/artwork-check) · [how long does an artwork check take](https://www.helloprint.com/en-ie/help-centre/how-long-does-an-artwork-check-take) · [always a perfect design](https://www.helloprint.com/en-ie/always-a-perfect-design) · [how to set up a file for print](https://www.helloprint.com/en-ie/blog/how-to-set-up-a-file-for-print) · cart text observed on helloprint.nl (English), 18 Nov 2026
+v0.1 was a web app you visit. **v0.2 brings the same checks into the conversation**, where customers already ask AI assistants for help.
 
-## What it does
-
-| Check | What it catches | Auto-fix |
+| | v0.1 | v0.2 (now) |
 |---|---|---|
-| **size** | wrong page size or shape for the product (either orientation) | scale, if only the size differs |
-| **bleed** | no bleed or too little, when colour reaches the edge (white edges are fine) | ✅ extend the edge colours outwards |
-| **dpi** | pictures too low-resolution *at the size they are printed* | – (needs a better image) |
-| **colour** | RGB pictures that may print duller | ✅ convert to CMYK |
-| **safezone** | text closer than 3–5 mm to the cut line | – (designer's decision) |
-| **fonts** | fonts not embedded in the PDF | ✅ fixed by flattening |
-| **text** | **typos** (English + Dutch, names skipped), broken **email / web address / phone number** | ✅ typos: one-click *accept*, never automatic |
-| **pages** | more pages than the product has sides | – |
+| Where | separate web page | **inside Claude**, as an [MCP App](https://modelcontextprotocol.io/docs/extensions/apps) (open standard, also in other assistants) |
+| Getting the file in | upload on the page | upload in the chat, or pick a **sample** |
+| Explaining problems | report + interactive preview | the same preview in the chat, and **Claude answers questions** in plain words |
+| Fixing | fix button, typo suggestions to accept | the same in the chat; typo changes now **keep the font style** (serif stays serif) |
+| Ordering | link to the product page | **order summary** from your own words ("250 matte business cards") |
+| Languages | English | **English and Dutch**, following Claude's language |
+| Real-world files | synthetic test set | **20 real-world-style files**; bugs found there (crop marks, rotated pages, Canva PNGs, links read as typos) fixed with tests |
 
-Every number (3 mm bleed, 300 dpi and so on) lives in [`specs/print_specs.yaml`](specs/print_specs.yaml), with the source sentence. My own thresholds are marked `(ours)`.
+![Automatic fix: before and after](docs/before_after.png)
+*The automatic fix: bleed added and colours converted; what needs the designer stays listed.*
 
-There is also a small detail I noticed: HelloPrint's own pages give **two different safe margins (3 mm and 5 mm)**. Here, under 3 mm is an error and 3–5 mm is a warning.
-
-## Results
-
-**42 labelled files · precision 1.00 · recall 0.94 · about 65 ms per file.** The full write-up is in [eval/RESULTS.md](eval/RESULTS.md).
-
-The evaluation earned its place. The first run showed **two false alarms**: a card with only 1–2 mm of bleed was called "the wrong shape". It was a size-check bug, and it is now fixed and covered by a regression test.
-
-The two remaining misses are kept in the set on purpose, with the fix described:
-- an RGB *vector* background (the colour check reads pictures only);
-- a typo inside a picture (that needs OCR).
-
-## Try it
-
-```bash
-git clone https://github.com/ammaradolcevita/print-preflight-agent && cd print-preflight-agent
-pip install -e ".[dev,web,mcp]"
-
-python -m preflight --list                                   # products
-python -m preflight my_card.pdf --product business-card      # check a file
-streamlit run web/app.py                                     # web demo (try the sample cards)
-pytest -q                                                    # 36 tests
-python eval/make_fixtures.py && python eval/run_eval.py      # evaluation
-```
-
-![Web demo](docs/web_demo.png)
-
-### From an AI assistant (MCP)
-
-Add this to Claude Desktop's `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "print-preflight": {
-      "command": "python",
-      "args": ["/ABSOLUTE/PATH/print-preflight-agent/mcp_server/server.py"]
-    }
-  }
-}
-```
-
-Then ask: *"I need 250 matte business cards. Can you check my design at ~/Desktop/card.pdf?"*
-
-| Tool | Does |
-|---|---|
-| `find_product` | "250 matte business cards" → product, quantity 250, finish matte |
-| `get_specs` | trim, bleed, safe margin, dpi, with sources |
-| `check_artwork` | report + annotated preview image |
-| `fix_artwork` | writes `*_print-ready.pdf` and re-checks it (the original is never changed) |
-| `build_product_link` | public product page; no cart, no order |
+Full list: [CHANGELOG.md](CHANGELOG.md)
 
 ## How it works
 
 ```
-request ──► matcher ──► product specs (YAML, with sources)
-file ─────► loader (PDF / PNG / JPG → one model in mm) ──► 8 checks ──► report ──► preview / web / MCP
-                                                                          └──► fixes ──► re-check
+Claude ──MCP──► hosted server ──► loader (PDF/PNG/JPG → one model in mm) ──► 8 checks ──► report
+   │                │                                                          └──► fixes ──► re-check
+   └── panel (MCP App) uploads, shows results, calls the same tools
 ```
 
-**Code measures, the assistant explains.** All checks are deterministic Python (PyMuPDF, Pillow), so they cannot "hallucinate" a measurement. The language model is the interface: it understands the request and talks to the customer.
+- **Code measures, the AI explains.** Checks are deterministic Python (PyMuPDF, Pillow); Claude is the interface.
+- **It never pretends.** What a fix cannot solve (blurry pictures, text at the edge, typos) is carried into the after-fix report.
+- **Every print number has a source** in [`specs/print_specs.yaml`](specs/print_specs.yaml).
 
-**Typos are suggested, never auto-corrected.** The customer ticks the corrections they want; only then the line is rewritten in the PDF (redaction + same position, size, colour and font). Contact details are never guessed.
+## How I know it works
 
-**After a fix, it does not lie.** The fixed file is a flattened 300-dpi image, so a naive re-check would report "print-ready" even with a blurry logo and a typo. Problems an automatic fix cannot solve (dpi, safe zone, text) are carried over into the after-fix report.
+- **42 synthetic files:** precision 1.00, recall 0.94. **20 real-world-style files** (Canva/Illustrator structures, crop marks, rotated pages, photos): 20/20 sensible verdicts, 0 crashes. → [eval/RESULTS.md](eval/RESULTS.md)
+- **97 tests** + ruff in CI on every push.
 
-## Limitations (honest)
+## Run locally
 
-- The evaluation files are synthetic and made by the same person who wrote the checks, so the scores are optimistic.
-- The bleed fix flattens the page to a 300-dpi image: fine for print, but text is no longer editable. The best result is still re-exporting with bleed.
-- The CMYK conversion uses MuPDF's colour management but not the printer's own ICC profile (e.g. FOGRA39). No overprint, spot-colour or total-ink checks yet.
-- Colour is checked on pictures only, not on vector shapes.
-- Text inside pictures is not read (no OCR yet).
-- Spell-check: English and Dutch only, and capitalised words (names) are skipped.
-
-## What I would do next
-
-1. **Run it inside checkout**, before payment, next to the product configurator. Then measure the share of orders that need a manual artwork follow-up, before and after (A/B).
-2. **Learn from real rejected files** (with permission) to rank the most common errors and tune the thresholds.
-3. Add colour checks on vector shapes, OCR for text in pictures, and an ICC-based CMYK conversion.
-4. Add a vision model for "is a face or logo cut off?", clearly labelled as an AI opinion.
-5. Add a support-agent mode: paste a customer's file and get a ready reply in their language (NL/DE/FR/EN).
-
-## Project layout
-
-```
-specs/print_specs.yaml   every print number, with its source
-preflight/               loader, checks/, fixes, preview, matcher, report, CLI
-mcp_server/server.py     MCP tools for AI assistants
-web/app.py               Streamlit demo
-eval/                    labelled fixtures, evaluation script, RESULTS.md
-tests/                   pytest (36 tests)
+```bash
+git clone https://github.com/ammaradolcevita/print-preflight-agent && cd print-preflight-agent
+pip install -e ".[dev,web,mcp]"
+python -m preflight my_card.pdf --product business-card   # check a file
+uvicorn mcp_server.http_app:app --port 8000               # hosted MCP server (/mcp)
+python mcp_server/server.py                               # local MCP server for Claude Desktop (file paths)
+streamlit run web/app.py                                  # web demo
+pytest -q
 ```
 
-MIT licence · Ammar Sodikov · [linkedin.com/in/ammarsodikov](https://www.linkedin.com/in/ammarsodikov/)
+## Limitations
+
+- Online demo: business cards and A5/A6 flyers (flyers in beta). Files are deleted after 60 minutes.
+- The automatic fix flattens pages to a 300-dpi image, so text is no longer editable; re-exporting with bleed is still best.
+- CMYK conversion without the printer's ICC profile; colour checked on pictures and spot colours, not RGB vector shapes; no OCR for text in pictures.
+
+MIT licence · Ammar Sodikov · [LinkedIn](https://www.linkedin.com/in/ammarsodikov/) · [GitHub](https://github.com/ammaradolcevita/print-preflight-agent)
