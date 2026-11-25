@@ -189,10 +189,11 @@ def _load_raster(path: Path, product: Product) -> Artwork:
     tw, th = product.trim_mm
     fw, fh = product.full_mm
     candidates = [(fw, fh), (tw, th), (fh, fw), (th, tw)]  # allow either orientation
-    for cw, ch in candidates:
-        if _close(aspect, cw / ch, rel):
-            page_w, page_h = cw, ch
-            break
+    # Take the CLOSEST shape, not the first that fits: for A-sizes "with bleed" (154 x 216 = 0.713)
+    # and "without bleed" (148 x 210 = 0.705) are both within tolerance of a 0.707 export.
+    fitting = [(abs(aspect - cw / ch), cw, ch) for cw, ch in candidates if _close(aspect, cw / ch, rel)]
+    if fitting:
+        _, page_w, page_h = min(fitting)
     else:
         page_w = tw if w_px >= h_px or tw >= th else th
         page_h = page_w / aspect

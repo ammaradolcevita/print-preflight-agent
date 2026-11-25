@@ -218,3 +218,16 @@ def test_demo_set_verdicts(tmp_path):
     after = check_after_fix(before, fix_artwork(no_bleed, "business-card", output=tmp_path / "fixed.pdf").output)
     assert after.verdict == "pass"
     assert check_file(mistakes, "business-card").verdict == "fail"
+
+
+def test_a_size_png_without_bleed_is_not_mistaken_for_bleed(tmp_path):
+    """A5 trim (0.705) and A5 + bleed (0.713) are both within 1 % of a 0.707 Canva PNG; pick the closest."""
+    from PIL import Image
+
+    png = tmp_path / "canva_flyer.png"
+    Image.new("RGB", (1414, 2000), (120, 40, 160)).save(png)  # colour to the edge, no bleed
+    r = check_file(png, "flyer-a5")
+    assert sev(r, "bleed") == "error", r.to_markdown()
+    with_bleed = tmp_path / "flyer_with_bleed.png"
+    Image.new("RGB", (1819, 2551), (120, 40, 160)).save(with_bleed)  # 154 x 216 mm at 300 dpi
+    assert sev(check_file(with_bleed, "flyer-a5"), "bleed") == "pass"
