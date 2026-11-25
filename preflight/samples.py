@@ -1,11 +1,15 @@
-"""Designed sample business cards for the demo, for a made-up person (Sam Jansen, example.com contacts).
+"""Designed sample business cards for the demo (85 x 55 mm, warm off-white, EB Garamond, "A/S" monogram).
 
 Same design, so the difference is only in how the file was prepared:
-- mistakes=True: no bleed while the colour band reaches the edge, a small RGB logo,
-  typos, a broken email, a phone number too close to the edge and one non-embedded font.
-- mistakes=False: 3 mm bleed, a sharp CMYK logo, clean text inside the safe zone, embedded fonts.
+- mistakes=True: no bleed while the paper colour reaches the edge, a small RGB logo,
+  typos, an incomplete email, a line too close to the edge and one non-embedded font.
+- mistakes=False: 3 mm bleed, CMYK colours, vector monogram, clean text inside the safe zone,
+  embedded (subset) fonts.
 - mistakes=False, bleed=False: the clean card exported without bleed. Only the bleed is wrong,
   so the automatic fix turns it into a print-ready file.
+
+Contacts are the owner's real ones, published here with his permission (25 Nov 2026).
+Font: EB Garamond, SIL Open Font License (preflight/fonts/OFL-EBGaramond.txt).
 """
 
 from __future__ import annotations
@@ -18,84 +22,88 @@ from PIL import Image, ImageDraw, ImageFont
 
 from .specs import mm_to_pt
 
-PAPER = (0.975, 0.965, 0.945)  # warm off-white
-INK = (0.10, 0.11, 0.13)
-GREY = (0.42, 0.43, 0.46)
-BAND = (0.07, 0.18, 0.24)  # deep blue-green
-BAND_RGB = tuple(int(c * 255) for c in BAND)
-ACCENT = (0.93, 0.42, 0.29)  # coral
+FONT_FILE = Path(__file__).resolve().parent / "fonts" / "EBGaramond.ttf"
+
+PAPER = (0.957, 0.937, 0.906)  # warm off-white: printed, so it needs bleed
+INK = (0.17, 0.16, 0.15)  # warm charcoal
+GREY = (0.47, 0.45, 0.42)
+RULE = (0.72, 0.69, 0.65)
+
+NAME = "Ammar Sodikov"
+TITLE = "Data scientist & AI engineer"
+TITLE_TYPOS = "Data scientst & AI enginer"
+PHONE = "+31 6 8607 3531"
+EMAIL = "ammar.sodikov@gmail.com"
+LINKEDIN = "linkedin.com/in/ammarsodikov"
 
 
 def _cmyk(rgb: tuple[float, float, float]) -> tuple[float, float, float, float]:
-    """Same simple RGB->CMYK formula Pillow uses for the logo, so the colours match."""
-    return (1 - rgb[0], 1 - rgb[1], 1 - rgb[2], 0.0)
+    """Simple RGB -> CMYK with a black component, so the print-ready card is CMYK throughout."""
+    k = 1 - max(rgb)
+    if k >= 1:
+        return (0.0, 0.0, 0.0, 1.0)
+    return tuple(round((1 - c - k) / (1 - k), 4) for c in rgb) + (round(k, 4),)
 
 
-def _logo(px: int, mode: str) -> bytes:
-    """Minimal monogram: a coral ring with 'SJ' on the band colour."""
-    img = Image.new("RGB", (px, px), BAND_RGB)
+def _monogram_png(px_w: int, px_h: int) -> bytes:
+    """The A/S monogram as a small RGB picture (only used for the card with mistakes)."""
+    paper = tuple(int(c * 255) for c in PAPER)
+    ink = tuple(int(c * 255) for c in INK)
+    img = Image.new("RGB", (px_w, px_h), paper)
     d = ImageDraw.Draw(img)
-    m = px * 0.08
-    d.ellipse((m, m, px - m, px - m), outline=(237, 107, 74), width=max(1, px // 22))
-    try:
-        font = ImageFont.truetype(io.BytesIO(pymupdf.Font("figbo").buffer), int(px * 0.34))
-    except Exception:  # noqa: BLE001 - pymupdf-fonts not installed
-        font = ImageFont.load_default()
-    d.text((px / 2, px / 2), "SJ", fill=(250, 246, 240), font=font, anchor="mm")
+    font = ImageFont.truetype(str(FONT_FILE), int(px_h * 0.62))
+    d.text((px_w * 0.26, px_h * 0.36), "A", fill=ink, font=font, anchor="mm")
+    d.text((px_w * 0.74, px_h * 0.66), "S", fill=ink, font=font, anchor="mm")
+    d.line((px_w * 0.60, px_h * 0.06, px_w * 0.40, px_h * 0.94), fill=tuple(int(c * 255) for c in RULE), width=1)
     buf = io.BytesIO()
-    if mode == "CMYK":
-        img.convert("CMYK").save(buf, "JPEG", quality=95)
-    else:
-        img.save(buf, "PNG")
+    img.save(buf, "PNG")
     return buf.getvalue()
 
 
 def business_card(path: str | Path, *, mistakes: bool, bleed: bool | None = None) -> Path:
     path = Path(path)
-    bleed = 0.0 if mistakes or bleed is False else 3.0
-    w, h = 85 + 2 * bleed, 55 + 2 * bleed
+    b = 0.0 if mistakes or bleed is False else 3.0
+    w, h = 85 + 2 * b, 55 + 2 * b
+    colour = (lambda c: c) if mistakes else _cmyk  # the clean card is CMYK throughout
+
     doc = pymupdf.open()
     page = doc.new_page(width=mm_to_pt(w), height=mm_to_pt(h))
-    for name in ("figo", "figbo"):  # FiraGO, from the pymupdf-fonts package (embedded in the PDF)
-        page.insert_font(fontname=name, fontbuffer=pymupdf.Font(name).buffer)
+    page.insert_font(fontname="garamond", fontfile=str(FONT_FILE))
 
-    def at(x, y):  # position in trim coordinates (mm) -> page points
-        return pymupdf.Point(mm_to_pt(x + bleed), mm_to_pt(y + bleed))
+    def at(x, y):  # trim coordinates (mm) -> page points
+        return pymupdf.Point(mm_to_pt(x + b), mm_to_pt(y + b))
 
-    def rect(x0, y0, x1, y1):
-        return pymupdf.Rect(mm_to_pt(x0 + bleed), mm_to_pt(y0 + bleed), mm_to_pt(x1 + bleed), mm_to_pt(y1 + bleed))
+    def text(x, y, s, size, col=INK, font="garamond"):
+        page.insert_text(at(x, y), s, fontname=font, fontsize=size, color=colour(col))
 
-    # background and the colour band on the right (it runs into the bleed).
-    # The print-ready card uses CMYK fills, matching the CMYK logo exactly.
-    paper, band = (PAPER, BAND) if mistakes else (_cmyk(PAPER), _cmyk(BAND))
-    page.draw_rect(page.rect, color=None, fill=paper)
-    page.draw_rect(rect(63, -bleed, 85 + bleed, 55 + bleed), color=None, fill=band)
+    page.draw_rect(page.rect, color=None, fill=colour(PAPER))  # paper colour runs into the bleed
 
-    # logo in the band
-    logo_px = 90 if mistakes else 300  # 18 mm wide: 127 dpi vs 423 dpi
-    page.insert_image(rect(65, 18.5, 83, 36.5), stream=_logo(logo_px, "RGB" if mistakes else "CMYK"))
-
-    bold = "figbo"
-    reg = "figo"
-    page.insert_text(at(8, 17), "Sam Jansen", fontname=bold, fontsize=13, color=INK)
-    title = "Data scientst & AI enginer" if mistakes else "Data scientist & AI engineer"
-    page.insert_text(at(8, 22.5), title, fontname=reg, fontsize=7.5, color=GREY)
-    page.draw_line(at(8, 26.5), at(18, 26.5), color=ACCENT, width=1.2)
-
-    email = "hello@example" if mistakes else "hello@example.com"
-    phone = "+31 6 0000 000" if mistakes else "+31 6 0000 0000"
-    page.insert_text(at(8, 38), email, fontname=reg, fontsize=7, color=INK)
+    # monogram, top right
     if mistakes:
-        # website set in Helvetica (not embedded), phone pushed to the very bottom edge
-        page.insert_text(at(8, 43), "www.example.com", fontname="helv", fontsize=7, color=INK)
-        page.insert_text(at(8, 53.6), phone, fontname=reg, fontsize=7, color=INK)
+        box = pymupdf.Rect(at(61, 8), at(79, 30))
+        page.insert_image(box, stream=_monogram_png(70, 86))  # 18 x 22 mm at ~100 dpi, RGB
     else:
-        page.insert_text(at(8, 43), "www.example.com", fontname=reg, fontsize=7, color=INK)
-        page.insert_text(at(8, 48), phone, fontname=reg, fontsize=7, color=INK)
+        text(61.2, 19.5, "A", 24)
+        text(70.0, 28.5, "S", 24)
+        page.draw_line(at(71.0, 9.5), at(67.0, 29.5), color=colour(RULE), width=0.5)
 
-    if bleed:
-        b = mm_to_pt(bleed)
-        page.set_trimbox(pymupdf.Rect(b, b, page.rect.width - b, page.rect.height - b))
+    # name, title, short rule
+    text(9, 29.5, NAME, 16)
+    text(9, 34.3, TITLE_TYPOS if mistakes else TITLE, 8, GREY)
+    page.draw_line(at(9.2, 37.6), at(16.5, 37.6), color=colour(RULE), width=0.6)
+
+    # contacts: phone, email, LinkedIn (baselines keep every line 5 mm inside the cut)
+    if mistakes:
+        text(9, 41.8, PHONE, 7, font="helv")  # Helvetica, not embedded
+        text(9, 45.2, EMAIL.removesuffix(".com"), 7)  # incomplete email
+        text(9, 53.6, LINKEDIN, 7)  # pushed to the very bottom edge
+    else:
+        text(9, 41.8, PHONE, 7)
+        text(9, 45.2, EMAIL, 7)
+        text(9, 48.6, LINKEDIN, 7)
+
+    if b:
+        page.set_trimbox(pymupdf.Rect(*(mm_to_pt(v) for v in (b, b, b + 85, b + 55))))
     path.parent.mkdir(parents=True, exist_ok=True)
     doc.subset_fonts()  # embed only the glyphs used, like real design tools do
     doc.save(path, garbage=3, deflate=True)
