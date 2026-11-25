@@ -211,13 +211,19 @@ def test_demo_set_verdicts(tmp_path):
     from preflight.report import check_after_fix
     from preflight.samples import write_demo_set
 
-    ready, no_bleed, mistakes = write_demo_set(tmp_path)
+    ready, no_bleed, mistakes, flyer = write_demo_set(tmp_path)
     assert check_file(ready, "business-card").verdict == "pass"
     before = check_file(no_bleed, "business-card")
     assert {f.check for f in before.findings if f.severity in ("warn", "error")} == {"bleed"}
     after = check_after_fix(before, fix_artwork(no_bleed, "business-card", output=tmp_path / "fixed.pdf").output)
     assert after.verdict == "pass"
     assert check_file(mistakes, "business-card").verdict == "fail"
+    # the flyer: no bleed + RGB are fixed, the 240-dpi photo is honestly left for the designer
+    f_before = check_file(flyer, "flyer-a5")
+    assert {f.check for f in f_before.findings if f.severity in ("warn", "error")} == {"bleed", "colour", "dpi"}
+    f_after = check_after_fix(f_before, fix_artwork(flyer, "flyer-a5", output=tmp_path / "flyer_fixed.pdf").output)
+    assert f_after.verdict == "warn"
+    assert {f.check for f in f_after.findings if f.severity in ("warn", "error")} == {"dpi"}
 
 
 def test_a_size_png_without_bleed_is_not_mistaken_for_bleed(tmp_path):

@@ -205,13 +205,16 @@ def test_instructions_ask_for_short_replies(client):
     assert "No tables" in text
 
 
-@pytest.mark.parametrize("sample,verdict", [("missing_bleed", "fail"), ("with_mistakes", "fail"),
-                                            ("print_ready", "pass")])
-def test_try_a_sample(client, sample, verdict):
+@pytest.mark.parametrize("sample,product,verdict", [("missing_bleed", "business-card", "fail"),
+                                                    ("with_mistakes", "business-card", "fail"),
+                                                    ("print_ready", "business-card", "pass"),
+                                                    ("flyer_a5", "flyer-a5", "fail")])
+def test_try_a_sample(client, sample, product, verdict):
     tools = {t["name"]: t for t in rpc(client, "tools/list", {})["tools"]}
     assert tools["load_sample"]["_meta"]["ui"]["visibility"] == ["app"]
     loaded = call(client, "load_sample", {"sample": sample})["structuredContent"]
-    report = first_json(call(client, "check_artwork", {"file_id": loaded["file_id"], "product_id": "business-card"}))
+    assert loaded["product_id"] == product
+    report = first_json(call(client, "check_artwork", {"file_id": loaded["file_id"], "product_id": product}))
     assert report["verdict"] == verdict
     assert client.get(f"/files/{loaded['file_id']}/x.pdf").status_code == 404  # samples are not "downloads"
 
@@ -261,3 +264,11 @@ def test_open_studio_carries_the_order(client):
     assert data["order"]["url"].startswith("https://www.helloprint.com/")
     empty = call(client, "open_preflight_studio", {})["structuredContent"]["order"]
     assert empty["quantity"] is None  # no request words: the panel shows the product only
+
+
+def test_sample_picker_is_in_the_page(client):
+    html = rpc(client, "resources/read", {"uri": http_app.STUDIO_URI})["contents"][0]["text"]
+    assert "/*__SAMPLES__*/" not in html
+    for sample_id in http_app.SAMPLES:
+        assert f'"id": "{sample_id}"' in html
+    assert html.count('"thumb": "data:image/png;base64,') == len(http_app.SAMPLES)

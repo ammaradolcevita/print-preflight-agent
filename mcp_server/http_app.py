@@ -17,6 +17,7 @@ from __future__ import annotations
 import base64
 import binascii
 import io
+import json
 import logging
 import os
 import re
@@ -24,6 +25,7 @@ import threading
 from pathlib import Path
 from typing import Any
 
+import pymupdf
 from mcp.server.apps import Apps
 from mcp.server.mcpserver import Image, MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
@@ -49,10 +51,11 @@ PREVIEW_PX = 900
 STUDIO_URI = "ui://preflight/studio.html"
 UI_DIR = Path(__file__).resolve().parent / "ui"
 SAMPLES_DIR = Path(__file__).resolve().parent.parent / "samples"
-SAMPLES = {  # "Try a sample" in the panel: our own business cards, no customer file needed
-    "missing_bleed": "sample_missing_bleed.pdf",
-    "with_mistakes": "sample_with_mistakes.pdf",
-    "print_ready": "sample_print_ready.pdf",
+SAMPLES = {  # "Try a sample" in the panel: our own files (preflight/samples.py), no customer file needed
+    "print_ready": ("sample_print_ready.pdf", "business-card"),
+    "missing_bleed": ("sample_missing_bleed.pdf", "business-card"),
+    "with_mistakes": ("sample_with_mistakes.pdf", "business-card"),
+    "flyer_a5": ("sample_flyer_a5.pdf", "flyer-a5"),
 }
 
 log = logging.getLogger("print-preflight")
@@ -73,7 +76,20 @@ def studio_html() -> str:
     exports = ",".join(f"{alias}:{local}" for local, alias in pairs)
     sdk = sdk[: m.start()] + f"globalThis.McpExtApps={{{exports}}};"
     page = (UI_DIR / "studio.html").read_text(encoding="utf-8")
+    page = page.replace("/*__SAMPLES__*/[]", json.dumps(_sample_thumbnails()))
     return page.replace("/*__EXT_APPS_SDK__*/", sdk.replace("</script", "<\\/script"))
+
+
+def _sample_thumbnails() -> list[dict]:
+    """Small previews of the demo files (as cut), so people can see what they pick."""
+    out = []
+    for sample_id, (name, product_id) in SAMPLES.items():
+        with pymupdf.open(SAMPLES_DIR / name) as doc:
+            page = doc[0]
+            pix = page.get_pixmap(dpi=72 if product_id == "business-card" else 40, clip=page.trimbox)
+            thumb = "data:image/png;base64," + base64.b64encode(pix.tobytes("png")).decode()
+        out.append({"id": sample_id, "product_id": product_id, "thumb": thumb})
+    return out
 
 
 def public_url() -> str:
@@ -186,12 +202,13 @@ def upload_chunk(data_base64: str, offset: int = 0, upload_id: str = "", filenam
 
 @apps.tool(resource_uri=STUDIO_URI, visibility=["app"], structured_output=True)
 def load_sample(sample: str = "missing_bleed") -> dict[str, Any]:
-    """Load one of the demo business cards (missing_bleed, with_mistakes, print_ready) as if it was uploaded."""
+    """Load a demo file (print_ready, missing_bleed, with_mistakes, flyer_a5) as if it was uploaded."""
     if sample not in SAMPLES:
         raise ToolError(f"Unknown sample. Choose one of: {', '.join(SAMPLES)}.")
     limits.disk(storage.used_bytes())
-    stored = storage.store_copy(SAMPLES_DIR / SAMPLES[sample], Path(SAMPLES[sample]).stem)
-    return {"file_id": stored.file_id, "file_name": SAMPLES[sample], "product_id": "business-card"}
+    name, product_id = SAMPLES[sample]
+    stored = storage.store_copy(SAMPLES_DIR / name, Path(name).stem)
+    return {"file_id": stored.file_id, "file_name": name, "product_id": product_id}
 
 
 # ---------------------------------------------------------------- server and tools

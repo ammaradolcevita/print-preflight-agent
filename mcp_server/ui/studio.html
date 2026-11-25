@@ -84,7 +84,15 @@
   .drop strong { font-size: 16px; display: block; }
   .link { color: var(--accent); font-weight: 600; }
   .specline { font-size: 13px; color: var(--muted); }
-  .samples { font-size: 13px; color: var(--muted); text-align: center; margin-top: 12px; }
+  .samples-title { font-size: 13px; font-weight: 650; color: var(--muted); margin-bottom: 8px; }
+  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tile { display: flex; align-items: center; gap: 12px; text-align: left; background: var(--bg); color: var(--text);
+          border: 1px solid var(--line); border-radius: 14px; padding: 8px 12px 8px 8px; min-height: 64px; }
+  .tile:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .tile img { width: 52px; height: 52px; object-fit: contain; flex: none; border-radius: 6px; background: var(--soft);
+              padding: 3px; border: 1px solid var(--line); }
+  .tile b { display: block; font-size: 13px; font-weight: 650; line-height: 1.3; }
+  .tile small { display: block; font-size: 12px; color: var(--muted); line-height: 1.35; margin-top: 2px; }
   .chip { background: none; border: 0; padding: 4px 6px; color: var(--accent); font-weight: 650; font-size: 13px;
           text-decoration: underline; text-underline-offset: 3px; text-decoration-color: transparent; }
   .chip:hover { text-decoration-color: currentColor; }
@@ -165,6 +173,7 @@
     h2 { font-size: 20px; }
     .ba { grid-template-columns: 1fr; }
     .actions .btn { flex: 1 1 100%; }
+    .tiles { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -203,10 +212,10 @@
         <span class="muted"><span data-i18n="or">or</span> <span class="link" data-i18n="choose">choose a file</span></span>
         <span class="small muted" style="display:block;margin-top:6px" id="limits">PDF, PNG or JPG · max 20 MB</span>
       </label>
-      <p class="samples" id="samples"><span data-i18n="samples">No file at hand? Try a sample:</span>
-        <button class="chip" type="button" data-sample="missing_bleed" data-i18n="sMissing">Missing bleed</button>·
-        <button class="chip" type="button" data-sample="with_mistakes" data-i18n="sMistakes">With mistakes</button>·
-        <button class="chip" type="button" data-sample="print_ready" data-i18n="sReady">Print-ready</button></p>
+      <div class="samples" id="samples">
+        <p class="samples-title" data-i18n="samples">No file at hand? Try one of ours:</p>
+        <div class="tiles" id="tiles"></div>
+      </div>
       <p class="specline" id="specs"></p>
       <div id="busy" class="hidden" aria-hidden="true"><div class="progress" id="bar"><div></div></div></div>
       <p id="status" class="muted small" role="status" aria-live="polite"></p>
@@ -316,7 +325,11 @@
       step1: "Upload", step2: "Results", step3: "Fix", step4: "Order",
       headline: "Is your design ready to print?", lead: "Upload it and we'll check it in about a second.",
       drop: "Drop your file here", or: "or", choose: "choose a file", limits: "PDF, PNG or JPG · max {mb} MB",
-      samples: "No file at hand? Try a sample:", sMissing: "Missing bleed", sMistakes: "With mistakes", sReady: "Print-ready",
+      samples: "No file at hand? Try one of ours:",
+      s_print_ready_t: "Business card · ready to print", s_print_ready_d: "Everything correct: this is what a pass looks like.",
+      s_missing_bleed_t: "Business card · missing bleed", s_missing_bleed_d: "One problem, fixed in one click.",
+      s_with_mistakes_t: "Business card · with mistakes", s_with_mistakes_d: "Typos, a blurry logo, text at the edge.",
+      s_flyer_a5_t: "Flyer A5 · Black Friday", s_flyer_a5_d: "No bleed, screen colours, a slightly soft photo.",
       specs: "We check against: <b>{w} × {h} mm</b>, <b>{b} mm</b> bleed, text <b>{s} mm</b> from the edge, pictures <b>{d} dpi</b>.",
       beta: "beta", betaSuffix: " (beta)", card: "Business cards",
       cut: "Cut line", bleedLine: "Bleed reaches here", safe: "Keep text inside",
@@ -354,7 +367,11 @@
       step1: "Uploaden", step2: "Resultaat", step3: "Herstellen", step4: "Bestellen",
       headline: "Is je ontwerp klaar voor druk?", lead: "Upload het en we controleren het in ongeveer een seconde.",
       drop: "Sleep je bestand hierheen", or: "of", choose: "kies een bestand", limits: "PDF, PNG of JPG · max. {mb} MB",
-      samples: "Geen bestand bij de hand? Probeer een voorbeeld:", sMissing: "Zonder afloop", sMistakes: "Met fouten", sReady: "Drukklaar",
+      samples: "Geen bestand bij de hand? Probeer een van de onze:",
+      s_print_ready_t: "Visitekaartje · drukklaar", s_print_ready_d: "Alles klopt: zo ziet een goedkeuring eruit.",
+      s_missing_bleed_t: "Visitekaartje · zonder afloop", s_missing_bleed_d: "Eén probleem, in één klik hersteld.",
+      s_with_mistakes_t: "Visitekaartje · met fouten", s_with_mistakes_d: "Typfouten, een wazig logo, tekst tegen de rand.",
+      s_flyer_a5_t: "Flyer A5 · Black Friday", s_flyer_a5_d: "Geen afloop, schermkleuren, een iets zachte foto.",
       specs: "We controleren op: <b>{w} × {h} mm</b>, <b>{b} mm</b> afloop, tekst <b>{s} mm</b> van de rand, afbeeldingen <b>{d} dpi</b>.",
       beta: "bèta", betaSuffix: " (bèta)", card: "Visitekaartjes",
       cut: "Snijlijn", bleedLine: "Afloop tot hier", safe: "Tekst binnen deze lijn",
@@ -400,6 +417,16 @@
     [/Nothing could be fixed automatically/, "Niets kon automatisch worden hersteld."]
   ];
   var lang = "en";
+  var SAMPLE_LIST = /*__SAMPLES__*/[];   // filled by the server: id, product_id, thumbnail
+
+  function renderTiles() {
+    $("tiles").innerHTML = SAMPLE_LIST.map(function (s) {
+      return '<button class="tile" type="button" data-sample="' + esc(s.id) + '" data-product="' + esc(s.product_id) + '">' +
+        '<img src="' + s.thumb + '" alt=""><span><b>' + esc(t("s_" + s.id + "_t")) + "</b><small>" +
+        esc(t("s_" + s.id + "_d")) + "</small></span></button>";
+    }).join("");
+    $("samples").classList.toggle("hidden", !SAMPLE_LIST.length);
+  }
 
   function t(key, vars) {
     var text = (I18N[lang] && I18N[lang][key]) || I18N.en[key] || key;
@@ -423,6 +450,7 @@
     lang = next;
     document.body.dataset.langApplied = "1";
     document.querySelectorAll("[data-i18n]").forEach(function (el) { el.textContent = t(el.dataset.i18n); });
+    renderTiles();
     if (state.products.length) setup(state.products, state.product, MAX_MB);
   }
 
@@ -629,10 +657,12 @@
 
   // ------------------------------------------------------------ try a sample
 
-  document.querySelectorAll("[data-sample]").forEach(function (btn) {
-    btn.addEventListener("click", function () {
+  $("tiles").addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-sample]");
+    if (!btn) return;
+    (function () {
       clearError();
-      state.product = "business-card";   // the samples are business cards
+      state.product = btn.dataset.product;   // each sample belongs to a product
       $("product").value = state.product;
       renderSpecs();
       setBusy(true, null);
@@ -646,7 +676,7 @@
         setStatus("");
         showError(e.message);
       });
-    });
+    })();
   });
 
   // ------------------------------------------------------------ check

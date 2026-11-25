@@ -111,16 +111,69 @@ def business_card(path: str | Path, *, mistakes: bool, bleed: bool | None = None
     return path
 
 
+def _sunset_photo(w_px: int, h_px: int) -> bytes:
+    """A warm abstract 'photo' (RGB JPEG) for the flyer: a sun over soft bands."""
+    top, bottom = (238, 120, 86), (74, 38, 62)
+    img = Image.new("RGB", (w_px, h_px))
+    d = ImageDraw.Draw(img)
+    for y in range(h_px):  # vertical gradient
+        k = y / max(1, h_px - 1)
+        d.line([(0, y), (w_px, y)], fill=tuple(int(a + (b - a) * k) for a, b in zip(top, bottom, strict=True)))
+    r = int(h_px * 0.34)
+    cx, cy = int(w_px * 0.68), int(h_px * 0.52)
+    d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=(252, 206, 140))
+    for i, y in enumerate(range(int(h_px * 0.62), h_px, max(6, h_px // 18))):  # bands over the sun
+        d.rectangle((0, y, w_px, y + max(3, h_px // 60) + i), fill=(92, 44, 66))
+    buf = io.BytesIO()
+    img.save(buf, "JPEG", quality=88)
+    return buf.getvalue()
+
+
+def flyer_a5(path: str | Path) -> Path:
+    """A5 Black Friday flyer exported the way many people do it: no bleed, an RGB photo at 240 dpi.
+
+    The automatic fix adds the bleed and converts the colours; the photo resolution stays a
+    decision for the designer (the honest 'fixed, a few things left' case).
+    """
+    path = Path(path)
+    w, h = 148, 210
+    doc = pymupdf.open()
+    page = doc.new_page(width=mm_to_pt(w), height=mm_to_pt(h))
+    page.insert_font(fontname="garamond", fontfile=str(FONT_FILE))
+    dark, cream, coral = (0.12, 0.10, 0.10), (0.96, 0.93, 0.88), (0.93, 0.47, 0.34)
+    page.draw_rect(page.rect, color=None, fill=dark)  # dark background to the very edge, no bleed
+    photo_h = 92
+    px_w, px_h = round(w / 25.4 * 240), round(photo_h / 25.4 * 240)  # 240 dpi: a bit soft for print
+    page.insert_image(pymupdf.Rect(0, 0, mm_to_pt(w), mm_to_pt(photo_h)), stream=_sunset_photo(px_w, px_h))
+
+    def text(x, y, s, size, col):
+        page.insert_text(pymupdf.Point(mm_to_pt(x), mm_to_pt(y)), s, fontname="garamond", fontsize=size, color=col)
+
+    text(14, 124, "Black Friday", 52, cream)
+    text(14.5, 138, "Up to 30% off everything", 18, coral)
+    page.draw_line(pymupdf.Point(mm_to_pt(15), mm_to_pt(146)), pymupdf.Point(mm_to_pt(35), mm_to_pt(146)),
+                   color=coral, width=0.8)
+    text(14.5, 158, "27 to 30 November", 13, cream)
+    text(14.5, 166, "In store and online", 13, cream)
+    text(14.5, 196, "Open every day from 9:00 to 21:00", 10, cream)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    doc.subset_fonts()
+    doc.save(path, garbage=3, deflate=True)
+    doc.close()
+    return path
+
+
 DEMO_SET = {
-    "sample_print_ready.pdf": {"mistakes": False},
-    "sample_missing_bleed.pdf": {"mistakes": False, "bleed": False},
-    "sample_with_mistakes.pdf": {"mistakes": True},
+    "sample_print_ready.pdf": lambda p: business_card(p, mistakes=False),
+    "sample_missing_bleed.pdf": lambda p: business_card(p, mistakes=False, bleed=False),
+    "sample_with_mistakes.pdf": lambda p: business_card(p, mistakes=True),
+    "sample_flyer_a5.pdf": flyer_a5,
 }
 
 
 def write_demo_set(folder: str | Path) -> list[Path]:
-    """The three demo files: print-ready, only bleed missing (fixable), many mistakes."""
-    return [business_card(Path(folder) / name, **kw) for name, kw in DEMO_SET.items()]
+    """The demo files: three business cards (ready, missing bleed, many mistakes) and an A5 flyer."""
+    return [make(Path(folder) / name) for name, make in DEMO_SET.items()]
 
 
 if __name__ == "__main__":  # python -m preflight.samples samples/

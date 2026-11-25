@@ -41,7 +41,7 @@ def all_files(tmp_path_factory):
     for name, product, _exp, _flags, make, _note in realworld.CASES:
         make(name)
         files.append((folder / name, product))
-    files += [(p, "business-card") for p in write_demo_set(folder / "samples")]
+    files += [(p, "flyer-a5" if "flyer" in p.name else "business-card") for p in write_demo_set(folder / "samples")]
     return files
 
 
