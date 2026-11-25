@@ -73,6 +73,14 @@ def sweep(now: float | None = None) -> int:
     return removed
 
 
+def used_bytes() -> int:
+    """Total size of everything in temporary storage (after removing expired files)."""
+    sweep()
+    if not ROOT.exists():
+        return 0
+    return sum(f.stat().st_size for f in ROOT.rglob("*") if f.is_file())
+
+
 def _safe_name(name: str) -> str:
     stem = Path(name or "artwork").stem
     return re.sub(r"[^A-Za-z0-9._ -]", "_", stem)[:60] or "artwork"

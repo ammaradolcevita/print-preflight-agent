@@ -31,7 +31,7 @@ from mcp.server.transport_security import TransportSecuritySettings
 from starlette.requests import Request
 from starlette.responses import FileResponse, JSONResponse, Response
 
-from mcp_server import storage
+from mcp_server import limits, storage
 from mcp_server.common import INSTRUCTIONS, product_or_error, register_catalog_tools, report_payload
 from preflight.fixes import fix_artwork as _fix
 from preflight.preview import render_preview
@@ -136,7 +136,9 @@ def open_preflight_studio(product_id: str = "business-card") -> dict[str, Any]:
         ],
         "max_upload_mb": storage.MAX_BYTES // (1024 * 1024),
         "note": "The panel is open and already shows the specs. Reply in one short sentence asking the customer "
-                "to upload their file above (no spec table); the results are shared with you when the check is done.",
+                "to upload their file above (no spec table); the results are shared with you when the check is done. "
+                "If the customer cannot see the panel (the Claude mobile app does not show interactive panels yet), "
+                "tell them to open this chat in Claude on a computer or at claude.ai in a browser.",
     }
 
 
@@ -154,6 +156,9 @@ def upload_chunk(data_base64: str, offset: int = 0, upload_id: str = "", filenam
         raise ToolError("The upload data is not valid base64.") from exc
     if len(data) > MAX_CHUNK_BYTES:
         raise ToolError("This chunk is too large. Send at most 2 MB per chunk.")
+    if not upload_id:
+        limits.disk(storage.used_bytes())
+    limits.upload(len(data))
     try:
         upload_id, size = storage.append_chunk(upload_id or None, filename, data, offset)
         if not final:
@@ -171,6 +176,7 @@ def load_sample(sample: str = "missing_bleed") -> dict[str, Any]:
     """Load one of the demo business cards (missing_bleed, with_mistakes, print_ready) as if it was uploaded."""
     if sample not in SAMPLES:
         raise ToolError(f"Unknown sample. Choose one of: {', '.join(SAMPLES)}.")
+    limits.disk(storage.used_bytes())
     stored = storage.store_copy(SAMPLES_DIR / SAMPLES[sample], Path(SAMPLES[sample]).stem)
     return {"file_id": stored.file_id, "file_name": SAMPLES[sample], "product_id": "business-card"}
 
@@ -187,7 +193,8 @@ server = MCPServer(
         "short and friendly. After opening the panel, say in one sentence that they can upload their file "
         "above. After a check or a fix, give the verdict and the single most important next step in one or "
         "two sentences, then offer to explain any point in more detail. No tables or spec lists unless the "
-        "customer asks for them."
+        "customer asks for them. If the customer cannot see the panel (for example in the Claude mobile app, "
+        "which does not show interactive panels yet), tell them to open the chat on a computer or at claude.ai."
     ),
     extensions=[apps],
 )
@@ -203,6 +210,7 @@ def check_artwork(file_id: str, product_id: str) -> list:
     """
     product = product_or_error(product_id, HOSTED_PRODUCTS)
     stored = _stored(file_id)
+    limits.heavy()
     with _Busy():
         report = check_file(stored.path, product.id)
         payload = report_payload(report)
@@ -226,6 +234,7 @@ def fix_artwork(file_id: str, product_id: str) -> list:
     """
     product = product_or_error(product_id, HOSTED_PRODUCTS)
     stored = _stored(file_id)
+    limits.heavy()
     with _Busy():
         before = check_file(stored.path, product.id)
         if any(f.check == "file" and f.severity == "error" for f in before.findings):

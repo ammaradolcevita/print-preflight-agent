@@ -18,6 +18,12 @@ H = {"Accept": "application/json, text/event-stream", "Content-Type": "applicati
 
 
 @pytest.fixture(autouse=True)
+def _reset_limits():
+    from mcp_server import limits
+    limits.reset()  # the counters are global; every test starts from zero
+
+
+@pytest.fixture(autouse=True)
 def tmp_storage(tmp_path, monkeypatch):
     monkeypatch.setattr(storage, "ROOT", tmp_path / "store")
     return tmp_path / "store"
@@ -213,3 +219,37 @@ def test_try_a_sample(client, sample, verdict):
 def test_unknown_sample(client):
     res = call(client, "load_sample", {"sample": "../../etc/passwd"})
     assert res["isError"] and "Unknown sample" in res["content"][0]["text"]
+
+
+# ---------------------------------------------------------------- limits and phone fallback
+
+
+@pytest.fixture
+def fresh_limits(monkeypatch):
+    from mcp_server import limits
+    limits.reset()
+    yield limits
+    limits.reset()
+
+
+def test_heavy_limit(client, card, fresh_limits, monkeypatch):
+    monkeypatch.setattr(fresh_limits, "HEAVY_PER_MINUTE", 1)
+    up = upload(client, card.read_bytes())
+    assert not call(client, "check_artwork", {"file_id": up["file_id"], "product_id": "business-card"}).get("isError")
+    res = call(client, "check_artwork", {"file_id": up["file_id"], "product_id": "business-card"})
+    assert res["isError"] and "busy" in res["content"][0]["text"]
+
+
+def test_upload_volume_and_disk_limits(client, card, fresh_limits, monkeypatch):
+    monkeypatch.setattr(fresh_limits, "UPLOAD_MB_PER_10_MIN", 0)
+    res = call(client, "upload_chunk", {"data_base64": base64.b64encode(card.read_bytes()).decode(), "final": True})
+    assert res["isError"] and "busy" in res["content"][0]["text"]
+    monkeypatch.setattr(fresh_limits, "UPLOAD_MB_PER_10_MIN", 300)
+    monkeypatch.setattr(fresh_limits, "STORAGE_MAX_MB", -1)  # "disk full"
+    res = call(client, "load_sample", {"sample": "missing_bleed"})
+    assert res["isError"] and "busy" in res["content"][0]["text"]
+
+
+def test_phone_fallback_is_explained(client):
+    res = call(client, "open_preflight_studio", {})
+    assert "mobile app" in res["structuredContent"]["note"]
