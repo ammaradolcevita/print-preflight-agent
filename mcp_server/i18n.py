@@ -97,6 +97,12 @@ _NL: list[tuple[str, Template]] = [
      r"checked reliably\. Please upload the file you designed \(PDF, or a PNG/JPG export\)\.",
      "Dit lijkt een foto van een camera ({c}), geen ontwerpbestand. Een foto van een gedrukt kaartje kan niet "
      "betrouwbaar worden gecontroleerd. Upload het bestand dat je hebt ontworpen (pdf, of een png/jpg-export)."),
+    # typo corrections the customer accepted
+    (r"Page (?P<p>\d+): \"(?P<w>[^\"]+)\" → \"(?P<r>[^\"]+)\"\.",
+     "Pagina {p}: \"{w}\" → \"{r}\"."),
+    (r"Page (?P<p>\d+): \"(?P<w>[^\"]+)\" → \"(?P<r>[^\"]+)\" \(set in (?P<f>[^:]+): the original font did not "
+     r"include every letter\)\.",
+     "Pagina {p}: \"{w}\" → \"{r}\" (in {f} gezet: het originele lettertype had niet alle letters)."),
     # automatic fix
     (r"Page (?P<p>\d+): added (?P<b>[\d.]+) mm bleed by extending the edge colours\.",
      "Pagina {p}: {b} mm afloop toegevoegd door de randkleuren door te trekken."),

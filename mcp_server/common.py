@@ -27,11 +27,16 @@ INSTRUCTIONS = (
 
 def report_payload(report) -> dict:
     data = report.to_dict()
-    data["numbered_issues"] = [
-        {"n": n, "check": f.check, "severity": f.severity, "message": f.message, "fixable": f.fixable}
-        for n, f in numbered(report.findings)
-    ]
+    data["numbered_issues"] = [_issue(n, f) for n, f in numbered(report.findings)]
     return data
+
+
+def _issue(n: int, f) -> dict:
+    issue = {"n": n, "check": f.check, "severity": f.severity, "message": f.message, "fixable": f.fixable}
+    if f.check == "text" and f.detail.get("kind") == "spelling" and f.detail.get("suggestion"):
+        # a typo with a suggestion: the panel can offer a one-click change (the customer decides)
+        issue["typo"] = {"word": f.detail["word"], "suggestion": f.detail["suggestion"], "page": f.page or 1}
+    return issue
 
 
 def product_or_error(product_id: str, products: Collection[str] | None = None):

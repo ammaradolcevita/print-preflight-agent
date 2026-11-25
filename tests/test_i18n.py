@@ -67,3 +67,13 @@ def test_translation_keeps_numbers_and_quotes():
     assert "(links, onder)" in translate(sides, "nl")
     assert translate(en, "en") == en
     assert translate("A brand new message.", "nl") == "A brand new message."  # never dropped
+
+
+def test_typo_change_texts_have_dutch(tmp_path):
+    from preflight.samples import business_card
+    from preflight.textfix import Correction, apply_corrections
+
+    card = business_card(tmp_path / "card.pdf", mistakes=True)
+    res = apply_corrections(card, [Correction(1, "scientst", "scientist")], output=tmp_path / "fixed.pdf")
+    assert res.changes and all(is_translated(c) for c in res.changes)
+    assert is_translated('Page 1: "x" → "y" (set in FiraGO: the original font did not include every letter).')

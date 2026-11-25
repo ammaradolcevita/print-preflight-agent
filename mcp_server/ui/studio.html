@@ -163,6 +163,11 @@
   .issue.error .num { background: #d62828; } .issue.warn .num { background: #e08a10; }
   .tag { display: inline-block; margin-top: 4px; font-size: 12px; font-weight: 600; }
   .tag.fix { color: var(--accent); } .tag.human { color: var(--muted); }
+  .tfix { margin-top: 8px; background: none; border: 1.5px solid var(--accent); color: var(--accent); border-radius: 999px;
+          padding: 5px 12px; font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; }
+  .tfix:hover { background: var(--accent-soft); }
+  .tfix:disabled { opacity: .55; cursor: default; }
+  .note-ok { background: var(--accent-soft); border-radius: 12px; padding: 10px 14px; font-size: 14px; }
   .allgood { background: var(--accent-soft); border-radius: 14px; padding: 12px 14px; }
   .summary { border: 1px solid var(--line); border-radius: 18px; padding: 18px 20px; }
   .summary .what { font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
@@ -259,6 +264,7 @@
         <p class="hint" id="hint-check" data-i18n="hintMarks">Point at a number to see the problem. Tap or click to keep it open.</p>
       </div>
       <div>
+        <p class="note-ok hidden" id="typo-note" role="status"></p>
         <p class="label" id="issues-label">What we found</p>
         <ul class="issues" id="issues"></ul>
       </div>
@@ -339,7 +345,7 @@
   var MAX_MB = 20;
   var $ = function (id) { return document.getElementById(id); };
 
-  var state = { products: [], product: "business-card", fileId: null, fileName: "", report: null, order: {}, fixed: null,
+  var state = { products: [], product: "business-card", fileId: null, fileName: "", report: null, order: {}, fixed: null, typoUrl: null,
                 beforeImg: null, downloadUrl: null };
 
 
@@ -380,6 +386,7 @@
       issuesOne: "1 thing to look at", issuesMany: "{n} things to look at",
       allGood: "✓ Size, bleed, resolution, colours, fonts and text all look good.",
       tagFix: "Auto-fixable", tagHuman: "Needs your designer",
+      changeTo: "Change to “{s}”", changing: "Changing…", typoDone: "✓ Changed in your file: {list}",
       fixedPass: "Fixed and ready to print", fixedWarn: "Fixed — a few things left", fixedFail: "Partly fixed",
       fixedPassText: "Download the new file and use it for your order.",
       fixedOtherText: "We fixed what is safe to fix. The rest needs a decision from you or your designer.",
@@ -423,6 +430,7 @@
       issuesOne: "1 punt om naar te kijken", issuesMany: "{n} punten om naar te kijken",
       allGood: "✓ Formaat, afloop, resolutie, kleuren, lettertypen en tekst zien er goed uit.",
       tagFix: "Automatisch te herstellen", tagHuman: "Vraag je ontwerper",
+      changeTo: "Wijzig in “{s}”", changing: "Bezig…", typoDone: "✓ Aangepast in je bestand: {list}",
       fixedPass: "Hersteld en klaar voor druk", fixedWarn: "Hersteld — nog een paar punten", fixedFail: "Deels hersteld",
       fixedPassText: "Download het nieuwe bestand en gebruik het voor je bestelling.",
       fixedOtherText: "We hebben hersteld wat veilig kan. De rest vraagt een beslissing van jou of je ontwerper.",
@@ -654,6 +662,8 @@
     if (file.size === 0) { showError(t("errEmpty")); return; }
 
     state.fileName = file.name;
+    state.typoUrl = null;
+    $("typo-note").classList.add("hidden");
     $("results").classList.add("hidden");
     $("fixed").classList.add("hidden");
     $("ready").classList.add("hidden");
@@ -696,6 +706,8 @@
     (function () {
       clearError();
       state.product = btn.dataset.product;   // each sample belongs to a product
+      state.typoUrl = null;
+      $("typo-note").classList.add("hidden");
       $("product").value = state.product;
       renderSpecs();
       setBusy(true, null);
@@ -736,8 +748,13 @@
     });
   }
 
-  function issueItem(i) {
+  function issueItem(i, allowTypo) {
     var tag = i.fixable ? '<span class="tag fix">' + t("tagFix") + "</span>" : '<span class="tag human">' + t("tagHuman") + "</span>";
+    if (i.typo && allowTypo === true) {  // one-click typo change in the PDF, only when the customer clicks
+                                         // (not after the auto-fix: that file is an image, its text is not live)
+      tag = '<button type="button" class="tfix" data-word="' + esc(i.typo.word) + '" data-sug="' + esc(i.typo.suggestion) +
+        '" data-page="' + i.typo.page + '">' + esc(t("changeTo", { s: i.typo.suggestion })) + "</button>";
+    }
     return '<li class="issue ' + esc(i.severity) + '" data-n="' + i.n + '"><span class="num" aria-label="Issue ' + i.n + '">' + i.n +
       "</span><div><p>" + esc(i.message) + "</p>" + tag + "</div></li>";
   }
@@ -815,7 +832,7 @@
     $("issues-label").textContent = issues.length === 1 ? t("issuesOne") : t("issuesMany", { n: issues.length });
     $("issues-label").classList.toggle("hidden", !issues.length);
     state.marks = r.markers || [];
-    $("issues").innerHTML = issues.length ? issues.map(issueItem).join("")
+    $("issues").innerHTML = issues.length ? issues.map(function (i) { return issueItem(i, true); }).join("")
       : '<li class="allgood">' + t("allGood") + "</li>";
     attachMarks($("stage-check"), state.marks, issues, $("issues"));
     $("hint-check").classList.toggle("hidden", !state.marks.length);
@@ -843,6 +860,37 @@
       "next step. Offer more detail instead of listing everything." +
       (lang === "nl" ? " The panel is shown in Dutch, so the customer probably prefers Dutch." : ""));
   }
+
+  // ------------------------------------------------------------ one-click typo changes
+
+  $("issues").addEventListener("click", function (e) {
+    var btn = e.target.closest(".tfix");
+    if (!btn) return;
+    e.stopPropagation();
+    btn.disabled = true;
+    btn.textContent = t("changing");
+    var word = btn.dataset.word, sug = btn.dataset.sug;
+    callTool("fix_typos", { file_id: state.fileId, product_id: state.product, lang: lang, interactive: true,
+                            corrections: [{ word: word, replacement: sug, page: Number(btn.dataset.page) || 1 }] })
+      .then(function (res) {
+        state.fileId = res.data.file_id;          // the corrected file is the one we continue with
+        state.typoUrl = res.data.download_url;
+        state.downloadUrl = res.data.download_url;
+        state.report = res.data;
+        state.beforeImg = res.image;
+        showResults(res.data, res.image);
+        var note = $("typo-note");
+        note.textContent = t("typoDone", { list: "“" + word + "” → “" + sug + "”" });
+        note.classList.remove("hidden");
+        tellClaude("The customer accepted a typo correction in the panel: \"" + word + "\" -> \"" + sug +
+          "\". The corrected file has file_id=" + state.fileId + " (download: " + state.typoUrl + ").");
+      })
+      .catch(function (err) {
+        btn.disabled = false;
+        btn.textContent = t("changeTo", { s: sug });
+        showError(err.message);
+      });
+  });
 
   // ------------------------------------------------------------ fix
 
@@ -953,7 +1001,7 @@
     if (printReady) lines.push("<li>" + esc(t(f ? "linePdf" : "lineAsIs")) + "</li>");
     if (left) lines.push('<li class="todo">' + esc(t("lineLeft", { n: left })) + "</li>");
     $("ready-lines").innerHTML = lines.join("");
-    $("download-btn-3").classList.toggle("hidden", !f);
+    $("download-btn-3").classList.toggle("hidden", !f && !state.typoUrl);
     ["upload", "results", "fixed"].forEach(function (id) { $(id).classList.add("hidden"); });
     $("ready").classList.remove("hidden");
     step(4);

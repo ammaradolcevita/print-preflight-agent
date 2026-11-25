@@ -289,3 +289,19 @@ def test_interactive_preview_has_markers(client):
     assert res["content"][1]["type"] == "image"
     fixed = first_json(call(client, "fix_artwork", {**args, "interactive": True}))
     assert {m["n"] for m in fixed["report_after"]["markers"]} <= {i["n"] for i in fixed["report_after"]["numbered_issues"]}
+
+
+def test_fix_typos_changes_only_reported_typos(client):
+    loaded = call(client, "load_sample", {"sample": "with_mistakes"})["structuredContent"]
+    args = {"file_id": loaded["file_id"], "product_id": "business-card"}
+    typos = [i["typo"] for i in first_json(call(client, "check_artwork", args))["numbered_issues"] if "typo" in i]
+    assert {t["word"] for t in typos} == {"scientst", "enginer"}
+    res = first_json(call(client, "fix_typos", {**args, "corrections": [
+        {"word": t["word"], "replacement": t["suggestion"], "page": t["page"]} for t in typos]}))
+    assert res["file_id"] != loaded["file_id"] and len(res["text_changes"]) == 2
+    assert not any("typo" in i for i in res["numbered_issues"])  # both words are now correct
+    assert "(set in" not in " ".join(res["text_changes"])  # same font family, so no note
+    path = res["download_url"].split("://", 1)[1].split("/", 1)[1]
+    assert client.get("/" + path).content.startswith(b"%PDF-")
+    bad = call(client, "fix_typos", {**args, "corrections": [{"word": "Ammar", "replacement": "Someone"}]})
+    assert bad["isError"] and "not one of the possible typos" in bad["content"][0]["text"]

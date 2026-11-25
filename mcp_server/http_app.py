@@ -41,6 +41,7 @@ from preflight.matcher import parse_request
 from preflight.preview import layout, render_preview
 from preflight.report import check_after_fix, check_file
 from preflight.specs import get_product
+from preflight.textfix import Correction, apply_corrections
 
 VERSION = "0.2.0"
 HOSTED_PRODUCTS = ("business-card", "flyer-a5", "flyer-a6")
@@ -326,6 +327,57 @@ def fix_artwork(file_id: str, product_id: str, lang: str = "en", interactive: bo
         "verdict_after": after.verdict,
         "report_after": payload,
     }]
+    if img:
+        out.append(img)
+    return out
+
+
+@server.tool()
+def fix_typos(file_id: str, product_id: str, corrections: list[dict[str, Any]], lang: str = "en",
+              interactive: bool = False) -> list:
+    """Change words the customer accepted (typos) directly in the PDF, then check the new file.
+
+    corrections: [{"word": "scientst", "replacement": "scientist", "page": 1}], only words the check reported
+    as possible typos. Position, size and colour stay the same. Returns the new report (with a new file_id,
+    used for the next steps), what changed and a download link. Only for PDFs with live text.
+    """
+    product = product_or_error(product_id, HOSTED_PRODUCTS)
+    stored = _stored(file_id)
+    if stored.kind != "pdf":
+        raise ToolError("Text can only be corrected in PDF files.")
+    if not corrections or len(corrections) > 20:
+        raise ToolError("Send between 1 and 20 corrections.")
+    limits.heavy()
+    with _Busy():
+        report = check_file(stored.path, product.id)
+        reported = {(f.detail.get("word"), f.page or 1) for f in report.findings
+                    if f.check == "text" and f.detail.get("kind") == "spelling"}
+        chosen = []
+        for c in corrections:
+            word, new = str(c.get("word", "")), str(c.get("replacement", "")).strip()
+            page = int(c.get("page") or 1)
+            if (word, page) not in reported:
+                raise ToolError(f'"{word}" is not one of the possible typos in this file.')
+            if not new or len(new) > 40:
+                raise ToolError("A replacement must be 1 to 40 characters.")
+            chosen.append(Correction(page, word, new))
+        work = storage.workdir(file_id)
+        result = apply_corrections(stored.path, chosen, output=work / "corrected.pdf")
+        if not result.changes:
+            raise ToolError("These words could not be changed in this file.")
+        fixed = storage.store_output(work / "corrected.pdf", stored.display_name)
+        new_report = check_file(fixed.path, product.id)
+        payload = _localised(report_payload(new_report), lang)
+        payload["file"] = stored.display_name
+        payload["file_id"] = fixed.file_id
+        payload["text_changes"] = [translate(c, lang) for c in result.changes]
+        payload["download_url"] = f"{public_url()}/files/{fixed.file_id}/{fixed.display_name}.pdf"
+        if interactive:
+            img, payload["markers"] = _interactive_preview(fixed.path, product, new_report.findings)
+        else:
+            img = _preview(fixed.path, product, new_report.findings)
+    log.info("typos: %d changed", len(result.changes))
+    out: list = [payload]
     if img:
         out.append(img)
     return out
