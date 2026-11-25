@@ -17,60 +17,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from mcp.server.mcpserver import Image, MCPServer
 
+from mcp_server.common import INSTRUCTIONS, register_catalog_tools, report_payload
 from preflight.fixes import fix_artwork as _fix
-from preflight.matcher import find_products, parse_request
-from preflight.preview import numbered, render_preview
+from preflight.preview import render_preview
 from preflight.report import check_after_fix, check_file
-from preflight.specs import get_product, load_specs
+from preflight.specs import get_product
 
-server = MCPServer(
-    "print-preflight",
-    instructions=(
-        "Checks print artwork (PDF/PNG/JPG) against product print specs before ordering. "
-        "Typical flow: find_product for the customer's request, check_artwork on their file, explain the "
-        "findings in plain language, offer fix_artwork for fixable problems, then build_product_link. "
-        "Never claim the file is print-ready when the report verdict is 'fail'. "
-        "Unofficial prototype: it does not place orders."
-    ),
-)
-
-
-def _report_payload(report) -> dict:
-    data = report.to_dict()
-    data["numbered_issues"] = [
-        {"n": n, "check": f.check, "severity": f.severity, "message": f.message, "fixable": f.fixable}
-        for n, f in numbered(report.findings)
-    ]
-    return data
-
-
-@server.tool()
-def find_product(request: str) -> dict:
-    """Find the best matching print product for a customer's request, e.g. '250 matte business cards'."""
-    return {
-        "request": request,
-        "parsed": parse_request(request),
-        "candidates": [m.to_dict() for m in find_products(request)],
-    }
-
-
-@server.tool()
-def get_specs(product_id: str) -> dict:
-    """Print specifications (trim size, bleed, safe margin, minimum dpi) for a product, with sources."""
-    p = get_product(product_id)
-    return {
-        "product_id": p.id,
-        "name": p.name,
-        "trim_mm": list(p.trim_mm),
-        "bleed_mm": p.spec.bleed_mm,
-        "safe_margin_mm": p.spec.safe_warn_mm,
-        "min_dpi": p.spec.dpi_min,
-        "max_pages": p.max_pages,
-        "sources": [
-            "https://www.helloprint.com/en-ie/always-a-perfect-design",
-            "https://www.helloprint.com/en-ie/blog/how-to-set-up-a-file-for-print",
-        ],
-    }
+server = MCPServer("print-preflight", instructions=INSTRUCTIONS)
+register_catalog_tools(server)
 
 
 @server.tool()
@@ -81,7 +35,7 @@ def check_artwork(file_path: str, product_id: str) -> list:
     black line = cut line, red dashed = where bleed must reach, green dashed = safe zone.
     """
     report = check_file(file_path, product_id)
-    out: list = [_report_payload(report)]
+    out: list = [report_payload(report)]
     if report.verdict != "fail" or any(f.check != "file" for f in report.findings):
         try:
             preview = render_preview(file_path, get_product(product_id), report.findings, width_px=900)
@@ -109,21 +63,8 @@ def fix_artwork(file_path: str, product_id: str) -> dict:
         "skipped": result.skipped,
         "verdict_before": before.verdict,
         "verdict_after": after.verdict,
-        "report_after": _report_payload(after),
+        "report_after": report_payload(after),
     }
-
-
-@server.tool()
-def build_product_link(product_id: str) -> dict:
-    """Public product page where the customer can order (no cart or order is created)."""
-    p = get_product(product_id)
-    return {"product_id": p.id, "name": p.name, "url": p.url}
-
-
-@server.tool()
-def list_products() -> list[dict]:
-    """All products this prototype knows, with their trim sizes."""
-    return [{"product_id": p["id"], "name": p["name"]} for p in load_specs()["products"]]
 
 
 if __name__ == "__main__":

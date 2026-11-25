@@ -1,0 +1,1047 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Print Preflight</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --soft: #f6f7f6;
+    --line: #e7eae8;
+    --text: #1b2220;
+    --muted: #66716c;
+    --accent: #1a7f5a;
+    --accent-hover: #146a4a;
+    --accent-soft: #eaf5ef;
+    --on-accent: #ffffff;
+    --warn: #9a5a00;
+    --warn-soft: #fff5e3;
+    --error: #b83430;
+    --error-soft: #fdf0ef;
+    --focus: #2f6db3;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #161a18; --soft: #1e2321; --line: #2c3330; --text: #eef1ef; --muted: #a2ada8;
+      --accent: #48bd8a; --accent-hover: #63cc9c; --accent-soft: #1a3328; --on-accent: #0d1612;
+      --warn: #f0b25a; --warn-soft: #34290f; --error: #f08680; --error-soft: #3a1d1c; --focus: #86b5ec;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #161a18; --soft: #1e2321; --line: #2c3330; --text: #eef1ef; --muted: #a2ada8;
+    --accent: #48bd8a; --accent-hover: #63cc9c; --accent-soft: #1a3328; --on-accent: #0d1612;
+    --warn: #f0b25a; --warn-soft: #34290f; --error: #f08680; --error-soft: #3a1d1c; --focus: #86b5ec;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 22px 20px 16px; }
+  h1, h2, h3, p { margin: 0; }
+  h1 { font-size: 17px; font-weight: 700; }
+  h2 { font-size: 22px; font-weight: 750; letter-spacing: -.015em; line-height: 1.25; }
+  .muted { color: var(--muted); }
+  .small { font-size: 13px; }
+  .hidden { display: none !important; }
+  section > * + * { margin-top: 18px; }
+
+  /* header */
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .brand { display: flex; align-items: center; gap: 9px; flex: none; }
+  .logo { width: 28px; height: 28px; border-radius: 8px; background: var(--accent-soft); color: var(--accent);
+          display: grid; place-items: center; }
+  select {
+    font: inherit; font-size: 14px; color: var(--text); background: transparent; border: 1px solid var(--line);
+    border-radius: 999px; padding: 6px 30px 6px 12px; appearance: none; cursor: pointer;
+    min-width: 0; max-width: 100%; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;
+    background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+    background-position: calc(100% - 16px) 55%, calc(100% - 11px) 55%; background-size: 5px 5px; background-repeat: no-repeat;
+  }
+
+  /* progress: one quiet line */
+  .steps { display: flex; gap: 6px; margin: 18px 0 26px; padding: 0; list-style: none; }
+  .steps li { flex: 1; font-size: 12px; color: var(--muted); }
+  .steps li::before { content: ""; display: block; height: 4px; border-radius: 99px; background: var(--line); margin-bottom: 6px; }
+  .steps li.done::before, .steps li.on::before { background: var(--accent); }
+  .steps li.on { color: var(--text); font-weight: 650; }
+
+  /* upload */
+  .lead { font-size: 15px; color: var(--muted); margin-top: 6px; }
+  .drop { display: block; border: 1.5px dashed var(--line); border-radius: 18px; padding: 36px 16px; text-align: center;
+          cursor: pointer; background: var(--soft); transition: border-color .15s, background .15s; }
+  .drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); }
+  .drop:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .drop input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .drop .icon { width: 46px; height: 46px; margin: 0 auto 12px; border-radius: 50%; display: grid; place-items: center;
+                background: var(--accent); color: var(--on-accent); }
+  .drop strong { font-size: 16px; display: block; }
+  .link { color: var(--accent); font-weight: 600; }
+  .specline { font-size: 13px; color: var(--muted); }
+  .samples-title { font-size: 13px; font-weight: 650; color: var(--muted); margin-bottom: 8px; }
+  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tile { display: flex; align-items: center; gap: 12px; text-align: left; background: var(--bg); color: var(--text);
+          border: 1px solid var(--line); border-radius: 14px; padding: 8px 12px 8px 8px; min-height: 64px; }
+  .tile:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .tile img { width: 52px; height: 52px; object-fit: contain; flex: none; border-radius: 6px; background: var(--soft);
+              padding: 3px; border: 1px solid var(--line); }
+  .tile b { display: block; font-size: 13px; font-weight: 650; line-height: 1.3; }
+  .tile small { display: block; font-size: 12px; color: var(--muted); line-height: 1.35; margin-top: 2px; }
+  .chip { background: none; border: 0; padding: 4px 6px; color: var(--accent); font-weight: 650; font-size: 13px;
+          text-decoration: underline; text-underline-offset: 3px; text-decoration-color: transparent; }
+  .chip:hover { text-decoration-color: currentColor; }
+  .specline b { color: var(--text); font-weight: 600; }
+  .beta { font-size: 11px; font-weight: 700; color: var(--warn); background: var(--warn-soft); border-radius: 99px;
+          padding: 1px 8px; margin-left: 4px; vertical-align: 1px; }
+
+  /* buttons */
+  .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; }
+  button { font: inherit; cursor: pointer; }
+  .btn { font-weight: 650; border-radius: 999px; padding: 11px 22px; border: 0; min-height: 44px;
+         background: var(--accent); color: var(--on-accent); }
+  .btn:hover { background: var(--accent-hover); }
+  .btn:disabled { opacity: .55; cursor: default; }
+  .textbtn { background: none; border: 0; padding: 8px 2px; color: var(--muted); font-weight: 600; font-size: 14px; }
+  .textbtn:hover { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+  button:focus-visible, select:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+  /* progress bar */
+  .progress { height: 6px; border-radius: 99px; background: var(--line); overflow: hidden; }
+  .progress > div { height: 100%; width: 0; background: var(--accent); border-radius: 99px; transition: width .2s; }
+  .progress.busy > div { width: 35%; animation: slide 1.1s ease-in-out infinite; }
+  @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
+  @media (prefers-reduced-motion: reduce) { .progress.busy > div { animation: none; width: 100%; opacity: .5; } }
+
+  /* verdict */
+  .verdict { display: flex; gap: 14px; align-items: center; }
+  .verdict .badge { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; flex: none;
+                    font-size: 20px; font-weight: 800; }
+  .verdict.pass .badge { background: var(--accent-soft); color: var(--accent); }
+  .verdict.warn .badge { background: var(--warn-soft); color: var(--warn); }
+  .verdict.fail .badge { background: var(--error-soft); color: var(--error); }
+  .verdict p { color: var(--muted); }
+
+  /* preview */
+  .preview img { display: block; width: 100%; height: auto; border-radius: 14px; background: var(--soft); }
+  .stage { position: relative; }
+  .mk { position: absolute; transform: translate(-50%, -50%); width: 26px; height: 26px; border-radius: 50%; padding: 0;
+        border: 2px solid #fff; color: #fff; font-size: 12px; font-weight: 800; cursor: pointer; z-index: 2;
+        box-shadow: 0 2px 6px rgba(0,0,0,.3); transition: transform .15s ease, opacity .15s; }
+  .mk.error { background: #d62828; } .mk.warn { background: #e08a10; }
+  .mk.active { transform: translate(-50%, -50%) scale(1.25); z-index: 4; }
+  .box { position: absolute; border: 2px solid; border-radius: 3px; cursor: pointer; transition: all .15s; }
+  .box.error { border-color: #d62828; } .box.warn { border-color: #e08a10; }
+  .box.active { background: rgba(255,255,255,.22); box-shadow: 0 0 0 4px rgba(0,0,0,.18); }
+  .stage.dim .mk:not(.active), .stage.dim .box:not(.active) { opacity: .3; }
+  .ba .mk { width: 20px; height: 20px; font-size: 10px; border-width: 1.5px; }  /* small before/after images */
+  .tip { position: absolute; z-index: 6; max-width: min(300px, 80%); background: #15191a; color: #f3f5f4; font-size: 13px;
+         line-height: 1.45; padding: 10px 12px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.35);
+         pointer-events: none; opacity: 0; transform: translateY(4px); transition: opacity .12s, transform .12s; }
+  .tip.show { opacity: 1; transform: none; }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .issue { cursor: pointer; transition: box-shadow .15s, background .15s; border-left: 3px solid transparent; }
+  .issue.active.error { border-left-color: #d62828; } .issue.active.warn { border-left-color: #e08a10; }
+  .issue.active { box-shadow: 0 4px 14px rgba(0,0,0,.08); }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 8px; font-size: 12px; color: var(--muted); }
+  .legend i { display: inline-block; width: 18px; vertical-align: middle; margin-right: 6px; border-top: 2px solid; }
+  .legend .cut { border-color: var(--text); }
+  .legend .bleed { border-top-style: dashed; border-color: #d62828; }
+  .legend .safe { border-top-style: dashed; border-color: #1e9646; }
+
+  /* issues */
+  .label { font-size: 13px; font-weight: 650; color: var(--muted); margin-bottom: 8px; }
+  .issues { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+  .issue { display: flex; gap: 12px; align-items: flex-start; background: var(--soft); border-radius: 14px; padding: 12px 14px; }
+  .issue .num { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; flex: none;
+                font-weight: 800; font-size: 12px; color: #fff; margin-top: 1px; }
+  .issue.error .num { background: #d62828; } .issue.warn .num { background: #e08a10; }
+  .tag { display: inline-block; margin-top: 4px; font-size: 12px; font-weight: 600; }
+  .tag.fix { color: var(--accent); } .tag.human { color: var(--muted); }
+  .tfix { margin-top: 8px; background: none; border: 1.5px solid var(--accent); color: var(--accent); border-radius: 999px;
+          padding: 5px 12px; font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; }
+  .tfix:hover { background: var(--accent-soft); }
+  .tfix:disabled { opacity: .55; cursor: default; }
+  .note-ok { background: var(--accent-soft); border-radius: 12px; padding: 10px 14px; font-size: 14px; }
+  .allgood { background: var(--accent-soft); border-radius: 14px; padding: 12px 14px; }
+  .summary { border: 1px solid var(--line); border-radius: 18px; padding: 18px 20px; }
+  .summary .what { font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
+  .summary ul { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 6px; }
+  .summary li { padding-left: 26px; position: relative; }
+  .summary li::before { content: "✓"; position: absolute; left: 4px; color: var(--accent); font-weight: 800; }
+  .summary li.todo::before { content: "!"; color: var(--warn); }
+
+  /* before / after */
+  .ba { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .ba figure { margin: 0; }
+  .ba figcaption { font-size: 12px; font-weight: 650; color: var(--muted); margin-bottom: 6px; }
+  .changes { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .changes li { padding-left: 26px; position: relative; }
+  .changes li::before { content: "✓"; position: absolute; left: 4px; color: var(--accent); font-weight: 800; }
+
+  .alert { border-radius: 14px; padding: 12px 14px; background: var(--error-soft); }
+  .alert b { color: var(--error); }
+  .linkbox { word-break: break-all; font-size: 13px; background: var(--soft); padding: 10px 12px; border-radius: 10px; }
+
+  footer { margin-top: 28px; font-size: 12px; color: var(--muted); text-align: center; }
+  .footlink { background: none; border: 0; padding: 0; font: inherit; color: var(--muted); cursor: pointer;
+              text-decoration: underline; text-underline-offset: 2px; }
+  .footlink:hover { color: var(--text); }
+
+  @media (max-width: 520px) {
+    .wrap { padding: 18px 16px 12px; }
+    .top { flex-wrap: wrap; }
+    .top select { flex: 1 1 100%; }
+    h2 { font-size: 20px; }
+    .ba { grid-template-columns: 1fr; }
+    .actions .btn { flex: 1 1 100%; }
+    .tiles { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>
+      </div>
+      <h1>Print Preflight</h1>
+    </div>
+    <select id="product" aria-label="Product"></select>
+  </header>
+
+  <ol class="steps" aria-label="Progress">
+    <li data-step="1" data-i18n="step1">Upload</li>
+    <li data-step="2" data-i18n="step2">Results</li>
+    <li data-step="3" data-i18n="step3">Fix</li>
+    <li data-step="4" data-i18n="step4">Order</li>
+  </ol>
+
+  <main>
+    <!-- 1. upload -->
+    <section id="upload">
+      <div>
+        <h2 data-i18n="headline">Is your design ready to print?</h2>
+        <p class="lead" data-i18n="lead">Upload it and we'll check it in about a second.</p>
+      </div>
+      <label class="drop" id="drop">
+        <input type="file" id="file" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg">
+        <div class="icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V5"/><path d="m7 10 5-5 5 5"/><path d="M5 19h14"/></svg>
+        </div>
+        <strong data-i18n="drop">Drop your file here</strong>
+        <span class="muted"><span data-i18n="or">or</span> <span class="link" data-i18n="choose">choose a file</span></span>
+        <span class="small muted" style="display:block;margin-top:6px" id="limits">PDF, PNG or JPG · max 20 MB</span>
+      </label>
+      <div class="samples" id="samples">
+        <p class="samples-title" data-i18n="samples">No file at hand? Try one of ours:</p>
+        <div class="tiles" id="tiles"></div>
+      </div>
+      <p class="specline" id="specs"></p>
+      <div id="busy" class="hidden" aria-hidden="true"><div class="progress" id="bar"><div></div></div></div>
+      <p id="status" class="muted small" role="status" aria-live="polite"></p>
+      <div id="error" class="alert hidden" role="alert"></div>
+    </section>
+
+    <!-- 2. results -->
+    <section id="results" class="hidden" aria-labelledby="verdict-title">
+      <div id="verdict" class="verdict">
+        <div class="badge" id="verdict-icon" aria-hidden="true"></div>
+        <div>
+          <h2 id="verdict-title"></h2>
+          <p id="verdict-text"></p>
+        </div>
+      </div>
+      <div class="preview" id="preview-box">
+        <div class="stage" id="stage-check"><img id="preview" alt="Your design with the cut line, bleed and safe zone drawn on it"></div>
+        <div class="legend"><span><i class="cut"></i><span data-i18n="cut">Cut line</span></span><span><i class="bleed"></i><span data-i18n="bleedLine">Bleed reaches here</span></span><span><i class="safe"></i><span data-i18n="safe">Keep text inside</span></span></div>
+        <p class="hint" id="hint-check" data-i18n="hintMarks">Point at a number to see the problem. Tap or click to keep it open.</p>
+      </div>
+      <div>
+        <p class="note-ok hidden" id="typo-note" role="status"></p>
+        <p class="label" id="issues-label">What we found</p>
+        <ul class="issues" id="issues"></ul>
+      </div>
+      <div class="actions">
+        <button class="btn" id="fix-btn" type="button" data-i18n="fix">Fix automatically</button>
+        <button class="textbtn" id="order-btn" type="button" data-i18n="order">Go to the order page</button>
+        <button class="textbtn" id="again-btn" type="button" data-i18n="again">Check another file</button>
+      </div>
+      <div id="fix-busy" class="hidden"><div class="progress busy"><div></div></div><p class="muted small" style="margin-top:8px" data-i18n="fixing">Fixing your file…</p></div>
+      <div id="fix-error" class="alert hidden" role="alert"></div>
+      <p class="small muted"><span id="file-name"></span> · <span data-i18n="checkedIn">checked in</span> <span id="seconds"></span> ·
+        <span data-i18n="askClaude">ask Claude about any point for more detail</span></p>
+    </section>
+
+    <!-- 3. fixed -->
+    <section id="fixed" class="hidden" aria-labelledby="fixed-title">
+      <div id="fixed-verdict" class="verdict">
+        <div class="badge" id="fixed-icon" aria-hidden="true"></div>
+        <div>
+          <h2 id="fixed-title"></h2>
+          <p id="fixed-text"></p>
+        </div>
+      </div>
+      <div class="ba">
+        <figure><figcaption data-i18n="before">Before</figcaption><div class="preview"><div class="stage" id="stage-before"><img id="before-img" alt="Your original design"></div></div></figure>
+        <figure><figcaption data-i18n="after">After</figcaption><div class="preview"><div class="stage" id="stage-after"><img id="after-img" alt="The fixed design"></div></div></figure>
+      </div>
+      <div>
+        <p class="label" data-i18n="changed">What we changed</p>
+        <ul class="changes" id="changes"></ul>
+      </div>
+      <div id="left-box">
+        <p class="label" data-i18n="stillDesigner">Still needs your designer</p>
+        <ul class="issues" id="left"></ul>
+      </div>
+      <div class="actions">
+        <button class="btn" id="download-btn" type="button" data-i18n="download">Download fixed PDF</button>
+        <button class="textbtn" id="order-btn-2" type="button" data-i18n="order">Go to the order page</button>
+        <button class="textbtn" id="again-btn-2" type="button" data-i18n="again">Check another file</button>
+      </div>
+      <p id="link-fallback" class="linkbox hidden"></p>
+      <p class="small muted" data-i18n="fixedNote">The fixed file is a print-ready image, so its text is no longer editable. The link works for 60 minutes. Ask Claude if you want to know more about any change.</p>
+    </section>
+
+    <!-- 4. ready to order -->
+    <section id="ready" class="hidden" aria-labelledby="ready-title">
+      <div id="ready-verdict" class="verdict pass">
+        <div class="badge" id="ready-icon" aria-hidden="true">✓</div>
+        <div>
+          <h2 id="ready-title"></h2>
+          <p id="ready-text"></p>
+        </div>
+      </div>
+      <div class="summary">
+        <p class="what" id="ready-what"></p>
+        <ul id="ready-lines"></ul>
+      </div>
+      <div class="actions">
+        <button class="btn" id="go-btn" type="button" data-i18n="goShop">Continue to HelloPrint →</button>
+        <button class="textbtn" id="download-btn-3" type="button" data-i18n="download">Download fixed PDF</button>
+        <button class="textbtn" id="again-btn-3" type="button" data-i18n="again">Check another file</button>
+      </div>
+      <p class="small muted" data-i18n="readyNote">You place the order yourself on HelloPrint. Nothing is ordered automatically.</p>
+    </section>
+  </main>
+
+  <footer><span data-i18n="footerBy">Prototype by Ammar Sodikov</span> ·
+    <button class="footlink" id="code-link" type="button" data-i18n="code">Code on GitHub</button> ·
+    <span data-i18n="footerFiles">Files are deleted after 60 minutes.</span></footer>
+</div>
+
+<script>/*__EXT_APPS_SDK__*/</script>
+<script>
+(function () {
+  "use strict";
+  var SDK = globalThis.McpExtApps || {};
+  var CHUNK = 1024 * 1024;             // 1 MB per upload call: small enough for any host limit
+  var MAX_MB = 20;
+  var $ = function (id) { return document.getElementById(id); };
+
+  var state = { products: [], product: "business-card", fileId: null, fileName: "", report: null, order: {}, fixed: null, typoUrl: null,
+                beforeImg: null, downloadUrl: null };
+
+
+  // ------------------------------------------------------------ language (English / Dutch)
+
+  var I18N = {
+    en: {
+      step1: "Upload", step2: "Results", step3: "Fix", step4: "Order",
+      headline: "Is your design ready to print?", lead: "Upload it and we'll check it in about a second.",
+      drop: "Drop your file here", or: "or", choose: "choose a file", limits: "PDF, PNG or JPG · max {mb} MB",
+      samples: "No file at hand? Try one of ours:",
+      s_print_ready_t: "Business card · ready to print", s_print_ready_d: "Everything correct: this is what a pass looks like.",
+      s_missing_bleed_t: "Business card · missing bleed", s_missing_bleed_d: "One problem, fixed in one click.",
+      s_with_mistakes_t: "Business card · with mistakes", s_with_mistakes_d: "Typos, a blurry logo, text at the edge.",
+      s_flyer_a5_t: "Flyer A5 · Black Friday", s_flyer_a5_d: "No bleed, screen colours, a slightly soft photo.",
+      specs: "We check against: <b>{w} × {h} mm</b>, <b>{b} mm</b> bleed, text <b>{s} mm</b> from the edge, pictures <b>{d} dpi</b>.",
+      beta: "beta", betaSuffix: " (beta)", card: "Business cards",
+      cut: "Cut line", bleedLine: "Bleed reaches here", safe: "Keep text inside",
+      hintMarks: "Point at a number to see the problem. Tap or click to keep it open.",
+      fix: "Fix automatically", order: "Continue to order",
+      goShop: "Continue to HelloPrint →", readyNote: "You place the order yourself on HelloPrint. Nothing is ordered automatically.",
+      readyTitle: "Ready to order", readyAlmost: "Almost ready to order",
+      readyText: "Your file is print-ready. Continue on HelloPrint to choose the options and order.",
+      readyAlmostText: "You can continue, but some points below still need your designer first.",
+      lineChecked: "File checked against the print specs in {s}", lineFixed: "Fixed automatically: {what}",
+      linePdf: "Print-ready PDF ready to download", lineAsIs: "Your file is print-ready as it is",
+      lineLeft: "{n} point(s) still need your designer", fMatte: "matte", fGlossy: "glossy",
+      sBleed: "{mm} mm bleed added", sCmyk: "colours converted to CMYK", sScaled: "scaled to size", again: "Check another file", download: "Download fixed PDF",
+      fixing: "Fixing your file…", checkedIn: "checked in", askClaude: "ask Claude about any point for more detail",
+      before: "Before", after: "After", changed: "What we changed", stillDesigner: "Still needs your designer",
+      fixedNote: "The fixed file is a print-ready image, so its text is no longer editable. The link works for 60 minutes. Ask Claude if you want to know more about any change.",
+      footerBy: "Prototype by Ammar Sodikov", code: "Code on GitHub", footerFiles: "Files are deleted after 60 minutes.",
+      uploading: "Uploading {name}…", checking: "Checking your file…", loadingSample: "Loading the sample…",
+      titlePass: "Ready to print", titleWarn: "Almost ready", titleFail: "Needs a fix first",
+      textPass: "We found no problems for this product.", textWarn: "It can be printed, but please look at the points below.",
+      textFail: "Printed like this, it would likely not look right.",
+      cantTitle: "We can't check this file", cantText: "A person should look at it, or try another file.",
+      issuesOne: "1 thing to look at", issuesMany: "{n} things to look at",
+      allGood: "✓ Size, bleed, resolution, colours, fonts and text all look good.",
+      tagFix: "Auto-fixable", tagHuman: "Needs your designer",
+      changeTo: "Change to “{s}”", changing: "Changing…", typoDone: "✓ Changed in your file: {list}",
+      fixedPass: "Fixed and ready to print", fixedWarn: "Fixed — a few things left", fixedFail: "Partly fixed",
+      fixedPassText: "Download the new file and use it for your order.",
+      fixedOtherText: "We fixed what is safe to fix. The rest needs a decision from you or your designer.",
+      copyLink: "Copy this link into your browser to download: ", sorry: "Sorry.",
+      errType: "This is not a PDF, PNG or JPG file. Please choose one of those.",
+      errSize: "This file is too large — the maximum is {mb} MB.", errEmpty: "This file is empty.",
+      errRead: "Could not read the file.", errConnect: "Could not connect to Claude. Please reload the chat.",
+      errOnlyClaude: "This panel only works inside Claude.", errGeneric: "Something went wrong."
+    },
+    nl: {
+      step1: "Uploaden", step2: "Resultaat", step3: "Herstellen", step4: "Bestellen",
+      headline: "Is je ontwerp klaar voor druk?", lead: "Upload het en we controleren het in ongeveer een seconde.",
+      drop: "Sleep je bestand hierheen", or: "of", choose: "kies een bestand", limits: "PDF, PNG of JPG · max. {mb} MB",
+      samples: "Geen bestand bij de hand? Probeer een van de onze:",
+      s_print_ready_t: "Visitekaartje · drukklaar", s_print_ready_d: "Alles klopt: zo ziet een goedkeuring eruit.",
+      s_missing_bleed_t: "Visitekaartje · zonder afloop", s_missing_bleed_d: "Eén probleem, in één klik hersteld.",
+      s_with_mistakes_t: "Visitekaartje · met fouten", s_with_mistakes_d: "Typfouten, een wazig logo, tekst tegen de rand.",
+      s_flyer_a5_t: "Flyer A5 · Black Friday", s_flyer_a5_d: "Geen afloop, schermkleuren, een iets zachte foto.",
+      specs: "We controleren op: <b>{w} × {h} mm</b>, <b>{b} mm</b> afloop, tekst <b>{s} mm</b> van de rand, afbeeldingen <b>{d} dpi</b>.",
+      beta: "bèta", betaSuffix: " (bèta)", card: "Visitekaartjes",
+      cut: "Snijlijn", bleedLine: "Afloop tot hier", safe: "Tekst binnen deze lijn",
+      hintMarks: "Wijs een nummer aan om het probleem te zien. Tik of klik om het open te houden.",
+      fix: "Automatisch herstellen", order: "Verder naar bestellen",
+      goShop: "Verder naar HelloPrint →", readyNote: "Je bestelt zelf op HelloPrint. Er wordt niets automatisch besteld.",
+      readyTitle: "Klaar om te bestellen", readyAlmost: "Bijna klaar om te bestellen",
+      readyText: "Je bestand is drukklaar. Ga verder op HelloPrint om de opties te kiezen en te bestellen.",
+      readyAlmostText: "Je kunt verder, maar een paar punten hieronder vragen eerst je ontwerper.",
+      lineChecked: "Bestand gecontroleerd op de drukspecificaties in {s}", lineFixed: "Automatisch hersteld: {what}",
+      linePdf: "Drukklare pdf klaar om te downloaden", lineAsIs: "Je bestand is drukklaar zoals het is",
+      lineLeft: "{n} punt(en) nog voor je ontwerper", fMatte: "mat", fGlossy: "glanzend",
+      sBleed: "{mm} mm afloop toegevoegd", sCmyk: "kleuren omgezet naar CMYK", sScaled: "op maat geschaald", again: "Ander bestand controleren", download: "Herstelde pdf downloaden",
+      fixing: "Je bestand wordt hersteld…", checkedIn: "gecontroleerd in", askClaude: "vraag Claude om meer uitleg over elk punt",
+      before: "Voor", after: "Na", changed: "Wat we hebben aangepast", stillDesigner: "Nog voor je ontwerper",
+      fixedNote: "Het herstelde bestand is een drukklare afbeelding, dus de tekst is niet meer bewerkbaar. De link werkt 60 minuten. Vraag Claude als je meer wilt weten over een aanpassing.",
+      footerBy: "Prototype van Ammar Sodikov", code: "Code op GitHub", footerFiles: "Bestanden worden na 60 minuten verwijderd.",
+      uploading: "{name} wordt geüpload…", checking: "Je bestand wordt gecontroleerd…", loadingSample: "Voorbeeld wordt geladen…",
+      titlePass: "Klaar voor druk", titleWarn: "Bijna klaar", titleFail: "Eerst herstellen",
+      textPass: "We vonden geen problemen voor dit product.", textWarn: "Het kan gedrukt worden, maar bekijk eerst de punten hieronder.",
+      textFail: "Zo gedrukt ziet het er waarschijnlijk niet goed uit.",
+      cantTitle: "We kunnen dit bestand niet controleren", cantText: "Laat iemand ernaar kijken, of probeer een ander bestand.",
+      issuesOne: "1 punt om naar te kijken", issuesMany: "{n} punten om naar te kijken",
+      allGood: "✓ Formaat, afloop, resolutie, kleuren, lettertypen en tekst zien er goed uit.",
+      tagFix: "Automatisch te herstellen", tagHuman: "Vraag je ontwerper",
+      changeTo: "Wijzig in “{s}”", changing: "Bezig…", typoDone: "✓ Aangepast in je bestand: {list}",
+      fixedPass: "Hersteld en klaar voor druk", fixedWarn: "Hersteld — nog een paar punten", fixedFail: "Deels hersteld",
+      fixedPassText: "Download het nieuwe bestand en gebruik het voor je bestelling.",
+      fixedOtherText: "We hebben hersteld wat veilig kan. De rest vraagt een beslissing van jou of je ontwerper.",
+      copyLink: "Kopieer deze link naar je browser om te downloaden: ", sorry: "Sorry.",
+      errType: "Dit is geen pdf-, png- of jpg-bestand. Kies een van die.",
+      errSize: "Dit bestand is te groot — het maximum is {mb} MB.", errEmpty: "Dit bestand is leeg.",
+      errRead: "Het bestand kon niet worden gelezen.", errConnect: "Kan geen verbinding maken met Claude. Laad de chat opnieuw.",
+      errOnlyClaude: "Dit paneel werkt alleen in Claude.", errGeneric: "Er ging iets mis."
+    }
+  };
+  // Server messages that can reach the customer, in Dutch (issue texts are translated on the server).
+  var SERVER_NL = [
+    [/no longer available/, "Dit bestand is niet meer beschikbaar (bestanden worden na 60 minuten verwijderd). Upload het opnieuw."],
+    [/busy/, "De demo is nu even druk. Probeer het over een paar minuten opnieuw."],
+    [/too large\. The maximum is (\d+) MB/, "Dit bestand is te groot. Het maximum is $1 MB."],
+    [/not a PDF, PNG or JPG/, "Dit is geen pdf-, png- of jpg-bestand. Upload een van die."],
+    [/part of the upload is missing/, "Een deel van de upload ontbreekt. Probeer het opnieuw."],
+    [/upload has expired/, "Deze upload is verlopen. Upload het bestand opnieuw."],
+    [/Nothing could be fixed automatically/, "Niets kon automatisch worden hersteld."]
+  ];
+  var lang = "en";
+  var CODE_URL = "https://github.com/ammaradolcevita/print-preflight-agent";
+  var SAMPLE_LIST = /*__SAMPLES__*/[];   // filled by the server: id, product_id, thumbnail
+
+  function renderTiles() {
+    $("tiles").innerHTML = SAMPLE_LIST.map(function (s) {
+      return '<button class="tile" type="button" data-sample="' + esc(s.id) + '" data-product="' + esc(s.product_id) + '">' +
+        '<img src="' + s.thumb + '" alt=""><span><b>' + esc(t("s_" + s.id + "_t")) + "</b><small>" +
+        esc(t("s_" + s.id + "_d")) + "</small></span></button>";
+    }).join("");
+    $("samples").classList.toggle("hidden", !SAMPLE_LIST.length);
+  }
+
+  function t(key, vars) {
+    var text = (I18N[lang] && I18N[lang][key]) || I18N.en[key] || key;
+    Object.keys(vars || {}).forEach(function (k) { text = text.split("{" + k + "}").join(vars[k]); });
+    return text;
+  }
+
+  function translateServer(msg) {
+    if (lang !== "nl") return msg;
+    for (var i = 0; i < SERVER_NL.length; i++) {
+      var m = msg.match(SERVER_NL[i][0]);
+      if (m) return SERVER_NL[i][1].replace("$1", m[1] || "");
+    }
+    return msg;
+  }
+
+  function setLang(locale) {
+    var next = /^nl\b/i.test(locale || "") ? "nl" : "en";
+    document.documentElement.lang = next;
+    if (next === lang && document.body.dataset.langApplied) return;
+    lang = next;
+    document.body.dataset.langApplied = "1";
+    document.querySelectorAll("[data-i18n]").forEach(function (el) { el.textContent = t(el.dataset.i18n); });
+    renderTiles();
+    if (state.products.length) setup(state.products, state.product, MAX_MB);
+  }
+
+  var DEFAULT_PRODUCTS = [
+    { product_id: "business-card", name: "Business cards, standard 85 x 55 mm", trim_mm: [85, 55], bleed_mm: 3, safe_margin_mm: 5, min_dpi: 300 },
+    { product_id: "flyer-a5", name: "Flyer A5 (148 x 210 mm)", trim_mm: [148, 210], bleed_mm: 3, safe_margin_mm: 5, min_dpi: 300, beta: true },
+    { product_id: "flyer-a6", name: "Flyer A6 (105 x 148 mm)", trim_mm: [105, 148], bleed_mm: 3, safe_margin_mm: 5, min_dpi: 300, beta: true }
+  ];
+
+  // ------------------------------------------------------------ host connection
+
+  var app = SDK.App ? new SDK.App({ name: "print-preflight-studio", version: "0.2.0" }, {}, { autoResize: true }) : null;
+
+  // The panel is always dark on purpose: in a light Claude chat it stands out as an app inside Claude.
+  // To follow the user's theme instead, set data-theme from ctx.theme here (see git history).
+  var ALWAYS_DARK = true;
+
+  function applyTheme(ctx) {
+    if (!ctx) return;
+    setLang(ctx.locale || navigator.language);
+    if (!ALWAYS_DARK && (ctx.theme === "dark" || ctx.theme === "light")) {
+      document.documentElement.setAttribute("data-theme", ctx.theme);
+    }
+  }
+
+  if (app) {
+    app.ontoolresult = function (result) {
+      var s = result && result.structuredContent;
+      if (!s || !s.products) {
+        try { s = JSON.parse(((result && result.content) || []).find(function (c) { return c.type === "text"; }).text); }
+        catch (e) { s = null; }
+      }
+      if (s && s.order) state.order = s.order;
+      if (s && s.products) setup(s.products, s.product_id, s.max_upload_mb);
+    };
+    app.onhostcontextchanged = applyTheme;
+    app.connect().then(function () { applyTheme(app.getHostContext()); })
+      .catch(function () { showError(t("errConnect")); });
+  }
+  setup(DEFAULT_PRODUCTS, "business-card", MAX_MB);
+  setLang(navigator.language);  // until Claude tells us the user's locale
+
+  function cleanError(text) {
+    return translateServer(String(text || t("errGeneric")).replace(/^Error executing tool \w+:\s*/, ""));
+  }
+
+  function callTool(name, args) {
+    if (!app) return Promise.reject(new Error(t("errOnlyClaude")));
+    return app.callServerTool({ name: name, arguments: args }).then(function (r) {
+      var text = (r.content || []).filter(function (c) { return c.type === "text"; }).map(function (c) { return c.text; });
+      if (r.isError) throw new Error(cleanError(text[0]));
+      var img = (r.content || []).find(function (c) { return c.type === "image"; });
+      var data = r.structuredContent && !Array.isArray(r.structuredContent.result) && !r.structuredContent.result
+        ? r.structuredContent : (text[0] ? JSON.parse(text[0]) : {});
+      return { data: data, image: img ? "data:" + img.mimeType + ";base64," + img.data : null };
+    });
+  }
+
+  function tellClaude(text) {
+    if (!app || !app.updateModelContext) return;
+    app.updateModelContext({ content: [{ type: "text", text: text }] }).catch(function () {});
+  }
+
+  function openUrl(url) {
+    if (!app) { window.open(url, "_blank", "noopener"); return Promise.resolve(true); }
+    return app.openLink({ url: url }).then(function (r) { return !(r && r.isError); }).catch(function () { return false; });
+  }
+
+  // ------------------------------------------------------------ product + specs
+
+  function shortName(p) {
+    return p.product_id === "business-card" ? t("card") + " · 85 × 55 mm"
+      : p.name.replace(/\s*\((\d+) x (\d+) mm\)/, " · $1 × $2 mm");
+  }
+
+  function setup(products, productId, maxMb) {
+    state.products = products;
+    if (productId) state.product = productId;
+    if (maxMb) MAX_MB = maxMb;
+    $("limits").textContent = t("limits", { mb: MAX_MB });
+    var sel = $("product");
+    sel.innerHTML = "";
+    products.forEach(function (p) {
+      var o = document.createElement("option");
+      o.value = p.product_id;
+      o.textContent = shortName(p) + (p.beta ? t("betaSuffix") : "");
+      sel.appendChild(o);
+    });
+    sel.value = state.product;
+    renderSpecs();
+  }
+
+  function current() {
+    return state.products.find(function (p) { return p.product_id === state.product; }) || state.products[0];
+  }
+
+  function renderSpecs() {
+    var p = current();
+    $("specs").innerHTML = t("specs", { w: p.trim_mm[0], h: p.trim_mm[1], b: p.bleed_mm, s: p.safe_margin_mm,
+                                       d: p.min_dpi }) + (p.beta ? '<span class="beta">' + t("beta") + "</span>" : "");
+  }
+
+  $("product").addEventListener("change", function (e) {
+    state.product = e.target.value;
+    renderSpecs();
+    if (state.fileId) runCheck();
+  });
+
+  // ------------------------------------------------------------ steps
+
+  function step(n) {
+    document.querySelectorAll(".steps li").forEach(function (li) {
+      var s = Number(li.dataset.step);
+      li.classList.toggle("on", s === n);
+      li.classList.toggle("done", s < n);
+      if (s === n) li.setAttribute("aria-current", "step"); else li.removeAttribute("aria-current");
+    });
+  }
+  step(1);
+
+  // ------------------------------------------------------------ upload
+
+  var drop = $("drop");
+  ["dragenter", "dragover"].forEach(function (ev) {
+    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add("over"); });
+  });
+  ["dragleave", "drop"].forEach(function (ev) {
+    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove("over"); });
+  });
+  drop.addEventListener("drop", function (e) {
+    var f = e.dataTransfer && e.dataTransfer.files[0];
+    if (f) handleFile(f);
+  });
+  $("file").addEventListener("change", function (e) {
+    var f = e.target.files[0];
+    e.target.value = "";
+    if (f) handleFile(f);
+  });
+
+  function setStatus(text) { $("status").textContent = text || ""; }
+  function showError(text) { var el = $("error"); el.innerHTML = "<b>" + t("sorry") + "</b> " + esc(text); el.classList.remove("hidden"); }
+  function clearError() { $("error").classList.add("hidden"); }
+  function setBusy(on, pct) {
+    $("busy").classList.toggle("hidden", !on);
+    drop.classList.toggle("hidden", on);
+    $("samples").classList.toggle("hidden", on);
+    var bar = $("bar");
+    bar.classList.toggle("busy", pct == null);
+    bar.firstElementChild.style.width = pct == null ? "" : Math.round(pct) + "%";
+  }
+
+  function readChunk(blob) {
+    return new Promise(function (resolve, reject) {
+      var r = new FileReader();
+      r.onload = function () { resolve(String(r.result).split(",")[1] || ""); };
+      r.onerror = function () { reject(new Error(t("errRead"))); };
+      r.readAsDataURL(blob);
+    });
+  }
+
+  function withRetry(fn, tries) {
+    return fn().catch(function (e) {
+      if (tries <= 1 || /too large|not a PDF|not valid/i.test(e.message)) throw e;
+      return new Promise(function (r) { setTimeout(r, 800); }).then(function () { return withRetry(fn, tries - 1); });
+    });
+  }
+
+  function handleFile(file) {
+    clearError();
+    var okType = /\.(pdf|png|jpe?g)$/i.test(file.name) || /^(application\/pdf|image\/(png|jpeg))$/.test(file.type);
+    if (!okType) { showError(t("errType")); return; }
+    if (file.size > MAX_MB * 1024 * 1024) { showError(t("errSize", { mb: MAX_MB })); return; }
+    if (file.size === 0) { showError(t("errEmpty")); return; }
+
+    state.fileName = file.name;
+    state.typoUrl = null;
+    $("typo-note").classList.add("hidden");
+    $("results").classList.add("hidden");
+    $("fixed").classList.add("hidden");
+    $("ready").classList.add("hidden");
+    step(1);
+    setBusy(true, 0);
+    setStatus(t("uploading", { name: file.name }));
+
+    var uploadId = "", offset = 0;
+    function next() {
+      var part = file.slice(offset, offset + CHUNK);
+      var final = offset + part.size >= file.size;
+      return readChunk(part).then(function (b64) {
+        return withRetry(function () {
+          return callTool("upload_chunk", { data_base64: b64, offset: offset, upload_id: uploadId,
+                                            filename: file.name, final: final });
+        }, 3);
+      }).then(function (res) {
+        if (final) return res.data;
+        uploadId = res.data.upload_id;
+        offset = res.data.received_bytes;
+        setBusy(true, offset / file.size * 100);
+        return next();
+      });
+    }
+    next().then(function (done) {
+      state.fileId = done.file_id;
+      runCheck();
+    }).catch(function (e) {
+      setBusy(false);
+      setStatus("");
+      showError(e.message);
+    });
+  }
+
+  // ------------------------------------------------------------ try a sample
+
+  $("tiles").addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-sample]");
+    if (!btn) return;
+    (function () {
+      clearError();
+      state.product = btn.dataset.product;   // each sample belongs to a product
+      state.typoUrl = null;
+      $("typo-note").classList.add("hidden");
+      $("product").value = state.product;
+      renderSpecs();
+      setBusy(true, null);
+      setStatus(t("loadingSample"));
+      callTool("load_sample", { sample: btn.dataset.sample }).then(function (res) {
+        state.fileId = res.data.file_id;
+        state.fileName = res.data.file_name;
+        runCheck();
+      }).catch(function (e) {
+        setBusy(false);
+        setStatus("");
+        showError(e.message);
+      });
+    })();
+  });
+
+  // ------------------------------------------------------------ check
+
+  var ICON = { pass: "✓", warn: "!", fail: "✕" };
+  var TITLE = { pass: "titlePass", warn: "titleWarn", fail: "titleFail" };
+  var SENTENCE = { pass: "textPass", warn: "textWarn", fail: "textFail" };
+
+  function runCheck() {
+    clearError();
+    $("upload").classList.remove("hidden");
+    setBusy(true, null);
+    setStatus(t("checking"));
+    callTool("check_artwork", { file_id: state.fileId, product_id: state.product, lang: lang, interactive: true }).then(function (res) {
+      setBusy(false);
+      setStatus("");
+      state.report = res.data;
+      state.beforeImg = res.image;
+      showResults(res.data, res.image);
+    }).catch(function (e) {
+      setBusy(false);
+      setStatus("");
+      showError(e.message);
+    });
+  }
+
+  function issueItem(i, allowTypo) {
+    var tag = i.fixable ? '<span class="tag fix">' + t("tagFix") + "</span>" : '<span class="tag human">' + t("tagHuman") + "</span>";
+    if (i.typo && allowTypo === true) {  // one-click typo change in the PDF, only when the customer clicks
+                                         // (not after the auto-fix: that file is an image, its text is not live)
+      tag = '<button type="button" class="tfix" data-word="' + esc(i.typo.word) + '" data-sug="' + esc(i.typo.suggestion) +
+        '" data-page="' + i.typo.page + '">' + esc(t("changeTo", { s: i.typo.suggestion })) + "</button>";
+    }
+    return '<li class="issue ' + esc(i.severity) + '" data-n="' + i.n + '"><span class="num" aria-label="Issue ' + i.n + '">' + i.n +
+      "</span><div><p>" + esc(i.message) + "</p>" + tag + "</div></li>";
+  }
+
+  // ------------------------------------------------------------ interactive markers on the preview
+
+  function attachMarks(stage, marks, issues, list) {
+    stage.querySelectorAll(".mk, .box, .tip").forEach(function (el) { el.remove(); });
+    stage.classList.remove("dim");
+    if (!marks || !marks.length) return;
+    var byN = {};
+    (issues || []).forEach(function (i) { byN[i.n] = i; });
+    var html = "";
+    marks.slice().sort(function (a, b) { return (a.severity === "error") - (b.severity === "error"); })
+      .forEach(function (m) {
+        if (m.box) html += '<div class="box ' + esc(m.severity) + '" data-n="' + m.n + '" style="left:' + m.box[0] +
+          "%;top:" + m.box[1] + "%;width:" + m.box[2] + "%;height:" + m.box[3] + '%"></div>';
+      });
+    marks.forEach(function (m) {
+      var label = byN[m.n] ? byN[m.n].message : "";
+      html += '<button type="button" class="mk ' + esc(m.severity) + '" data-n="' + m.n + '" style="left:' + m.x +
+        "%;top:" + m.y + '%" aria-label="' + m.n + ": " + esc(label) + '">' + m.n + "</button>";
+    });
+    stage.insertAdjacentHTML("beforeend", html + '<div class="tip" role="tooltip"></div>');
+    var tip = stage.querySelector(".tip"), pinned = null;
+
+    function show(n) {
+      var all = [stage].concat(list ? [list] : []);
+      all.forEach(function (root) {
+        root.querySelectorAll("[data-n]").forEach(function (el) { el.classList.toggle("active", n !== null && el.dataset.n === String(n)); });
+      });
+      stage.classList.toggle("dim", n !== null);
+      var mk = n !== null && stage.querySelector('.mk[data-n="' + n + '"]');
+      if (!mk || !byN[n]) { tip.classList.remove("show"); return; }
+      tip.textContent = byN[n].message;
+      var sr = stage.getBoundingClientRect(), mr = mk.getBoundingClientRect();
+      tip.style.left = "0px"; tip.style.top = "0px"; tip.classList.add("show");
+      var x = mr.left - sr.left + mr.width / 2 + 12, y = mr.top - sr.top + mr.height / 2 + 12;
+      if (x + tip.offsetWidth > sr.width - 6) x = Math.max(6, sr.width - tip.offsetWidth - 6);
+      if (y + tip.offsetHeight > sr.height - 6) y = Math.max(6, mr.top - sr.top - tip.offsetHeight - 8);
+      tip.style.left = x + "px"; tip.style.top = y + "px";
+    }
+
+    function bind(el) {
+      var n = el.dataset.n;
+      el.addEventListener("mouseenter", function () { if (pinned === null) show(n); });
+      el.addEventListener("mouseleave", function () { if (pinned === null) show(null); });
+      el.addEventListener("focus", function () { if (pinned === null) show(n); });
+      el.addEventListener("blur", function () { if (pinned === null) show(null); });
+      el.addEventListener("click", function () { pinned = pinned === n ? null : n; show(pinned); });
+    }
+    stage.querySelectorAll(".mk, .box").forEach(bind);
+    if (list) list.querySelectorAll(".issue[data-n]").forEach(function (li) {
+      if (stage.querySelector('.mk[data-n="' + li.dataset.n + '"]')) bind(li);
+    });
+  }
+
+  function showVerdict(prefix, verdict) {
+    var box = $(prefix === "fixed" ? "fixed-verdict" : "verdict");
+    box.className = "verdict " + verdict;
+    $(prefix === "fixed" ? "fixed-icon" : "verdict-icon").textContent = ICON[verdict];
+  }
+
+  function showResults(r, img) {
+    var cantOpen = (r.findings || []).some(function (f) { return f.check === "file" && f.severity === "error"; });
+    showVerdict("results", r.verdict);
+    $("verdict-title").textContent = t(cantOpen ? "cantTitle" : TITLE[r.verdict]);
+    $("verdict-text").textContent = t(cantOpen ? "cantText" : SENTENCE[r.verdict]);
+    $("file-name").textContent = state.fileName;
+    var secs = r.seconds < 0.01 ? "< 0.01" : (r.seconds < 0.1 ? r.seconds.toFixed(2) : r.seconds.toFixed(1));
+    $("seconds").textContent = (lang === "nl" ? secs.replace(".", ",") : secs) + " s";
+    $("preview-box").classList.toggle("hidden", !img);
+    if (img) $("preview").src = img;
+    var issues = r.numbered_issues || [];
+    $("issues-label").textContent = issues.length === 1 ? t("issuesOne") : t("issuesMany", { n: issues.length });
+    $("issues-label").classList.toggle("hidden", !issues.length);
+    state.marks = r.markers || [];
+    $("issues").innerHTML = issues.length ? issues.map(function (i) { return issueItem(i, true); }).join("")
+      : '<li class="allgood">' + t("allGood") + "</li>";
+    attachMarks($("stage-check"), state.marks, issues, $("issues"));
+    $("hint-check").classList.toggle("hidden", !state.marks.length);
+    var fixable = issues.some(function (i) { return i.fixable; });
+    $("fix-btn").classList.toggle("hidden", !fixable || cantOpen);
+    state.fixed = null;
+    var orderPrimary = !fixable && !cantOpen;   // nothing to fix: the order step is the next step
+    $("order-btn").className = orderPrimary ? "btn" : "textbtn";
+    $("order-btn").classList.toggle("hidden", cantOpen);
+    $("fix-error").classList.add("hidden");
+    $("upload").classList.add("hidden");   // one step at a time
+    $("results").classList.remove("hidden");
+    $("fixed").classList.add("hidden");
+    $("ready").classList.add("hidden");
+    step(2);
+
+    var lines = issues.map(function (i) {
+      return i.n + ". [" + i.severity + (i.fixable ? ", fixable automatically" : ", needs the designer") + "] " + i.message;
+    });
+    tellClaude("Print Preflight checked \"" + state.fileName + "\" as " + current().name + ": " +
+      r.verdict_text + " (" + r.verdict + ").\n" + (lines.length ? lines.join("\n") : "No problems found.") +
+      "\nfile_id=" + state.fileId + ", product_id=" + state.product +
+      ". The customer sees all of this in the panel and can press \"Fix automatically\" there " +
+      "(or you can call fix_artwork with these ids). Reply in one or two short sentences: the verdict and the " +
+      "next step. Offer more detail instead of listing everything." +
+      (lang === "nl" ? " The panel is shown in Dutch, so the customer probably prefers Dutch." : ""));
+  }
+
+  // ------------------------------------------------------------ one-click typo changes
+
+  $("issues").addEventListener("click", function (e) {
+    var btn = e.target.closest(".tfix");
+    if (!btn) return;
+    e.stopPropagation();
+    btn.disabled = true;
+    btn.textContent = t("changing");
+    var word = btn.dataset.word, sug = btn.dataset.sug;
+    callTool("fix_typos", { file_id: state.fileId, product_id: state.product, lang: lang, interactive: true,
+                            corrections: [{ word: word, replacement: sug, page: Number(btn.dataset.page) || 1 }] })
+      .then(function (res) {
+        state.fileId = res.data.file_id;          // the corrected file is the one we continue with
+        state.typoUrl = res.data.download_url;
+        state.downloadUrl = res.data.download_url;
+        state.report = res.data;
+        state.beforeImg = res.image;
+        showResults(res.data, res.image);
+        var note = $("typo-note");
+        note.textContent = t("typoDone", { list: "“" + word + "” → “" + sug + "”" });
+        note.classList.remove("hidden");
+        tellClaude("The customer accepted a typo correction in the panel: \"" + word + "\" -> \"" + sug +
+          "\". The corrected file has file_id=" + state.fileId + " (download: " + state.typoUrl + ").");
+      })
+      .catch(function (err) {
+        btn.disabled = false;
+        btn.textContent = t("changeTo", { s: sug });
+        showError(err.message);
+      });
+  });
+
+  // ------------------------------------------------------------ fix
+
+  $("fix-btn").addEventListener("click", function () {
+    var btn = $("fix-btn");
+    btn.disabled = true;
+    $("fix-busy").classList.remove("hidden");
+    $("fix-error").classList.add("hidden");
+    callTool("fix_artwork", { file_id: state.fileId, product_id: state.product, lang: lang, interactive: true }).then(function (res) {
+      $("fix-busy").classList.add("hidden");
+      btn.disabled = false;
+      showFixed(res.data, res.image);
+    }).catch(function (e) {
+      $("fix-busy").classList.add("hidden");
+      btn.disabled = false;
+      var el = $("fix-error");
+      el.innerHTML = "<b>" + t("sorry") + "</b> " + esc(e.message);
+      el.classList.remove("hidden");
+    });
+  });
+
+  function showFixed(f, img) {
+    var after = f.report_after || {};
+    showVerdict("fixed", f.verdict_after);
+    $("fixed-title").textContent = t(f.verdict_after === "pass" ? "fixedPass" : f.verdict_after === "warn" ? "fixedWarn" : "fixedFail");
+    $("fixed-text").textContent = t(f.verdict_after === "pass" ? "fixedPassText" : "fixedOtherText");
+    $("before-img").src = state.beforeImg || "";
+    $("after-img").src = img || "";
+    $("changes").innerHTML = (f.changes || []).filter(function (c) { return !/no longer editable|niet meer bewerkbaar/.test(c); })
+      .map(function (c) {
+        c = c.replace(/^(Page|Pagina) \d+: /, "").replace(/\s*\(colour-managed, no printer profile\)/, "")
+             .replace(/^converted to CMYK/, "converted colours to print colours (CMYK)");
+        return "<li>" + esc(c.charAt(0).toUpperCase() + c.slice(1)) + "</li>";
+      })
+      .filter(function (li, i, all) { return all.indexOf(li) === i; }).join("");  // 2-sided files: same change once
+    var left = after.numbered_issues || [];
+    $("left-box").classList.toggle("hidden", !left.length);
+    $("left").innerHTML = left.map(issueItem).join("");
+    attachMarks($("stage-before"), state.marks, (state.report || {}).numbered_issues || [], null);
+    attachMarks($("stage-after"), after.markers || [], left, $("left"));
+    state.downloadUrl = f.download_url;
+    state.fixed = f;
+    $("link-fallback").classList.add("hidden");
+    $("results").classList.add("hidden");
+    $("fixed").classList.remove("hidden");
+    step(3);
+    tellClaude("Print Preflight fixed the file: " + f.verdict_before + " -> " + f.verdict_after + ".\nChanges: " +
+      (f.changes || []).join(" ") + "\nStill needs the designer: " +
+      (left.length ? left.map(function (i) { return i.message; }).join(" ") : "nothing") +
+      "\nDownload (60 minutes): " + f.download_url +
+      "\nThe customer sees the before/after and the download button in the panel. Reply in one or two short " +
+      "sentences; mention anything the designer still has to do.");
+  }
+
+  $("download-btn").addEventListener("click", function () {
+    var url = state.downloadUrl;
+    if (!url) return;
+    openUrl(url).then(function (ok) {
+      if (!ok) {
+        var el = $("link-fallback");
+        el.textContent = t("copyLink") + url;
+        el.classList.remove("hidden");
+      }
+    });
+  });
+
+  // ------------------------------------------------------------ order page + restart
+
+  function niceChanges(changes) {
+    return (changes || []).filter(function (c) { return !/no longer editable|niet meer bewerkbaar/.test(c); })
+      .map(function (c) {
+        return c.replace(/^(Page|Pagina) \d+: /, "").replace(/\s*\(colour-managed, no printer profile\)/, "")
+                .replace(/^converted to CMYK/, "converted colours to print colours (CMYK)").replace(/\.$/, "");
+      })
+      .filter(function (c, i, all) { return all.indexOf(c) === i; });
+  }
+
+  function shortFixes(changes) {
+    // short wording for the order summary: "3 mm bleed added, colours converted to CMYK"
+    var out = [];
+    (changes || []).forEach(function (c) {
+      var mm = (c.match(/(\d+(?:[.,]\d+)?) mm (?:bleed|afloop)/) || [])[1];
+      var label = mm ? t("sBleed", { mm: mm }) : /CMYK/.test(c) ? t("sCmyk") : /scaled|geschaald/.test(c) ? t("sScaled") : null;
+      if (label && out.indexOf(label) < 0) out.push(label);
+    });
+    return out;
+  }
+
+  function finishLabel(f) {
+    if (!f) return "";
+    if (/^mat/i.test(f)) return t("fMatte");
+    if (/^gl/i.test(f)) return t("fGlossy");
+    return f;
+  }
+
+  function showReady() {
+    var r = state.report || {}, f = state.fixed, o = state.order || {};
+    var left = f ? ((f.report_after || {}).numbered_issues || []).length : (r.numbered_issues || []).length;
+    var printReady = f ? f.verdict_after === "pass" : r.verdict === "pass";
+    $("ready-verdict").className = "verdict " + (printReady ? "pass" : "warn");
+    $("ready-icon").textContent = printReady ? "✓" : "!";
+    $("ready-title").textContent = t(printReady ? "readyTitle" : "readyAlmost");
+    $("ready-text").textContent = t(printReady ? "readyText" : "readyAlmostText");
+    $("ready-what").textContent = (o.quantity ? o.quantity + " × " : "") + shortName(current()) +
+      (o.finish ? " · " + finishLabel(o.finish) : "");
+    var lines = ['<li>' + esc(t("lineChecked", { s: $("seconds").textContent })) + "</li>"];
+    if (f) lines.push("<li>" + esc(t("lineFixed", { what: shortFixes(f.changes).join(", ") })) + "</li>");
+    if (printReady) lines.push("<li>" + esc(t(f ? "linePdf" : "lineAsIs")) + "</li>");
+    if (left) lines.push('<li class="todo">' + esc(t("lineLeft", { n: left })) + "</li>");
+    $("ready-lines").innerHTML = lines.join("");
+    $("download-btn-3").classList.toggle("hidden", !f && !state.typoUrl);
+    ["upload", "results", "fixed"].forEach(function (id) { $(id).classList.add("hidden"); });
+    $("ready").classList.remove("hidden");
+    step(4);
+    tellClaude("Print Preflight order summary: " + $("ready-what").textContent + ". File " +
+      (printReady ? "is print-ready" + (f ? " (fixed automatically)" : "") : "still has " + left + " point(s) for the designer") +
+      ". The customer continues on the shop page themselves; nothing is ordered. Reply in one short sentence.");
+  }
+
+  function goShop() {
+    var url = state.order && state.order.url;
+    var go = url ? Promise.resolve(url)
+      : callTool("build_product_link", { product_id: state.product }).then(function (res) { return res.data.url; });
+    go.then(openUrl).catch(function (e) { showError(e.message); });
+  }
+  $("order-btn").addEventListener("click", showReady);
+  $("order-btn-2").addEventListener("click", showReady);
+  $("go-btn").addEventListener("click", goShop);
+  $("download-btn-3").addEventListener("click", function () { $("download-btn").click(); });
+
+  function again() {
+    state.fileId = null;
+    $("results").classList.add("hidden");
+    $("fixed").classList.add("hidden");
+    $("ready").classList.add("hidden");
+    $("upload").classList.remove("hidden");
+    clearError();
+    step(1);
+    $("file").focus({ preventScroll: true });
+  }
+  $("again-btn").addEventListener("click", again);
+  $("again-btn-2").addEventListener("click", again);
+  $("again-btn-3").addEventListener("click", again);
+  $("code-link").addEventListener("click", function () { openUrl(CODE_URL); });
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+})();
+</script>
+</body>
+</html>

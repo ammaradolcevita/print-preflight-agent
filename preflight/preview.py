@@ -11,6 +11,7 @@ draw interactive markers on top. `render_preview()` burns the markers into a PNG
 
 from __future__ import annotations
 
+import io
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -60,7 +61,12 @@ def _font(size: int):
             return ImageFont.truetype(name, size)
         except OSError:
             continue
-    return ImageFont.load_default()
+    try:  # servers often have no system fonts: use FiraGO Bold from pymupdf-fonts (a dependency)
+        import pymupdf
+
+        return ImageFont.truetype(io.BytesIO(pymupdf.Font("figbo").buffer), size)
+    except Exception:  # noqa: BLE001
+        return ImageFont.load_default(size)
 
 
 def layout(path: str | Path, product: Product, findings: list[Finding] | None = None,
