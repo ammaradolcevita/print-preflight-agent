@@ -33,6 +33,7 @@ from starlette.responses import FileResponse, JSONResponse, Response
 
 from mcp_server import limits, storage
 from mcp_server.common import INSTRUCTIONS, product_or_error, register_catalog_tools, report_payload
+from mcp_server.i18n import translate
 from preflight.fixes import fix_artwork as _fix
 from preflight.preview import render_preview
 from preflight.report import check_after_fix, check_file
@@ -93,6 +94,13 @@ def _stored(file_id: str, **kw) -> storage.Stored:
         return storage.get(file_id, **kw)
     except storage.StorageError as exc:
         raise ToolError(str(exc)) from exc
+
+
+def _localised(payload: dict, lang: str) -> dict:
+    """Issue texts in the panel's language (Claude still gets the English findings)."""
+    for issue in payload["numbered_issues"]:
+        issue["message"] = translate(issue["message"], lang)
+    return payload
 
 
 def _preview(path, product, findings) -> Image | None:
@@ -202,18 +210,19 @@ register_catalog_tools(server, HOSTED_PRODUCTS)
 
 
 @server.tool()
-def check_artwork(file_id: str, product_id: str) -> list:
+def check_artwork(file_id: str, product_id: str, lang: str = "en") -> list:
     """Check an uploaded print file (file_id from the Print Preflight panel) for a product.
 
     Returns the report (verdict + numbered issues in plain English) and an annotated preview image:
     black line = cut line, red dashed = where bleed must reach, green dashed = safe zone.
+    lang: "en" (default) or "nl" for the issue texts shown in the panel.
     """
     product = product_or_error(product_id, HOSTED_PRODUCTS)
     stored = _stored(file_id)
     limits.heavy()
     with _Busy():
         report = check_file(stored.path, product.id)
-        payload = report_payload(report)
+        payload = _localised(report_payload(report), lang)
         payload["file"] = stored.display_name  # never show server paths
         payload["file_id"] = file_id
         out: list = [payload]
@@ -226,11 +235,12 @@ def check_artwork(file_id: str, product_id: str) -> list:
 
 
 @server.tool()
-def fix_artwork(file_id: str, product_id: str) -> list:
+def fix_artwork(file_id: str, product_id: str, lang: str = "en") -> list:
     """Automatically fix what is safe to fix (missing bleed, RGB colours, scale) and re-check.
 
     Returns what changed, what still needs the designer, the new verdict, a preview of the fixed file
     and a download link for the fixed PDF (valid for 60 minutes). The uploaded file is never changed.
+    lang: "en" (default) or "nl" for the texts shown in the panel.
     """
     product = product_or_error(product_id, HOSTED_PRODUCTS)
     stored = _stored(file_id)
@@ -245,15 +255,15 @@ def fix_artwork(file_id: str, product_id: str) -> list:
             raise ToolError("Nothing could be fixed automatically: " + " ".join(result.skipped))
         fixed = storage.store_output(work / "fixed.pdf", f"{stored.display_name}_print-ready")
         after = check_after_fix(before, fixed.path)
-        payload = report_payload(after)
+        payload = _localised(report_payload(after), lang)
         payload["file"] = f"{fixed.display_name}.pdf"
         img = _preview(fixed.path, product, after.findings)
     log.info("fix: %s %s -> %s", product.id, before.verdict, after.verdict)
     out: list = [{
         "fixed_file_id": fixed.file_id,
         "download_url": f"{public_url()}/files/{fixed.file_id}/{fixed.display_name}.pdf",
-        "changes": result.changes,
-        "skipped": result.skipped,
+        "changes": [translate(c, lang) for c in result.changes],
+        "skipped": [translate(c, lang) for c in result.skipped],
         "verdict_before": before.verdict,
         "verdict_after": after.verdict,
         "report_after": payload,

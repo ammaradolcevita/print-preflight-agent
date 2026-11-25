@@ -175,32 +175,32 @@
   </header>
 
   <ol class="steps" aria-label="Progress">
-    <li data-step="1">Upload</li>
-    <li data-step="2">Results</li>
-    <li data-step="3">Fix</li>
-    <li data-step="4">Order</li>
+    <li data-step="1" data-i18n="step1">Upload</li>
+    <li data-step="2" data-i18n="step2">Results</li>
+    <li data-step="3" data-i18n="step3">Fix</li>
+    <li data-step="4" data-i18n="step4">Order</li>
   </ol>
 
   <main>
     <!-- 1. upload -->
     <section id="upload">
       <div>
-        <h2>Is your design ready to print?</h2>
-        <p class="lead">Upload it and we'll check it in about a second.</p>
+        <h2 data-i18n="headline">Is your design ready to print?</h2>
+        <p class="lead" data-i18n="lead">Upload it and we'll check it in about a second.</p>
       </div>
       <label class="drop" id="drop">
         <input type="file" id="file" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg">
         <div class="icon" aria-hidden="true">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V5"/><path d="m7 10 5-5 5 5"/><path d="M5 19h14"/></svg>
         </div>
-        <strong>Drop your file here</strong>
-        <span class="muted">or <span class="link">choose a file</span></span>
+        <strong data-i18n="drop">Drop your file here</strong>
+        <span class="muted"><span data-i18n="or">or</span> <span class="link" data-i18n="choose">choose a file</span></span>
         <span class="small muted" style="display:block;margin-top:6px" id="limits">PDF, PNG or JPG · max 20 MB</span>
       </label>
-      <p class="samples" id="samples">No file at hand? Try a sample:
-        <button class="chip" type="button" data-sample="missing_bleed">Missing bleed</button>·
-        <button class="chip" type="button" data-sample="with_mistakes">With mistakes</button>·
-        <button class="chip" type="button" data-sample="print_ready">Print-ready</button></p>
+      <p class="samples" id="samples"><span data-i18n="samples">No file at hand? Try a sample:</span>
+        <button class="chip" type="button" data-sample="missing_bleed" data-i18n="sMissing">Missing bleed</button>·
+        <button class="chip" type="button" data-sample="with_mistakes" data-i18n="sMistakes">With mistakes</button>·
+        <button class="chip" type="button" data-sample="print_ready" data-i18n="sReady">Print-ready</button></p>
       <p class="specline" id="specs"></p>
       <div id="busy" class="hidden" aria-hidden="true"><div class="progress" id="bar"><div></div></div></div>
       <p id="status" class="muted small" role="status" aria-live="polite"></p>
@@ -218,21 +218,21 @@
       </div>
       <div class="preview" id="preview-box">
         <img id="preview" alt="Your design with the cut line, bleed and safe zone drawn on it">
-        <div class="legend"><span><i class="cut"></i>Cut line</span><span><i class="bleed"></i>Bleed reaches here</span><span><i class="safe"></i>Keep text inside</span></div>
+        <div class="legend"><span><i class="cut"></i><span data-i18n="cut">Cut line</span></span><span><i class="bleed"></i><span data-i18n="bleedLine">Bleed reaches here</span></span><span><i class="safe"></i><span data-i18n="safe">Keep text inside</span></span></div>
       </div>
       <div>
         <p class="label" id="issues-label">What we found</p>
         <ul class="issues" id="issues"></ul>
       </div>
       <div class="actions">
-        <button class="btn" id="fix-btn" type="button">Fix automatically</button>
-        <button class="textbtn" id="order-btn" type="button">Go to the order page</button>
-        <button class="textbtn" id="again-btn" type="button">Check another file</button>
+        <button class="btn" id="fix-btn" type="button" data-i18n="fix">Fix automatically</button>
+        <button class="textbtn" id="order-btn" type="button" data-i18n="order">Go to the order page</button>
+        <button class="textbtn" id="again-btn" type="button" data-i18n="again">Check another file</button>
       </div>
-      <div id="fix-busy" class="hidden"><div class="progress busy"><div></div></div><p class="muted small" style="margin-top:8px">Fixing your file…</p></div>
+      <div id="fix-busy" class="hidden"><div class="progress busy"><div></div></div><p class="muted small" style="margin-top:8px" data-i18n="fixing">Fixing your file…</p></div>
       <div id="fix-error" class="alert hidden" role="alert"></div>
-      <p class="small muted"><span id="file-name"></span> · checked in <span id="seconds"></span> ·
-        ask Claude about any point for more detail</p>
+      <p class="small muted"><span id="file-name"></span> · <span data-i18n="checkedIn">checked in</span> <span id="seconds"></span> ·
+        <span data-i18n="askClaude">ask Claude about any point for more detail</span></p>
     </section>
 
     <!-- 3. fixed -->
@@ -245,28 +245,28 @@
         </div>
       </div>
       <div class="ba">
-        <figure><figcaption>Before</figcaption><div class="preview"><img id="before-img" alt="Your original design"></div></figure>
-        <figure><figcaption>After</figcaption><div class="preview"><img id="after-img" alt="The fixed design"></div></figure>
+        <figure><figcaption data-i18n="before">Before</figcaption><div class="preview"><img id="before-img" alt="Your original design"></div></figure>
+        <figure><figcaption data-i18n="after">After</figcaption><div class="preview"><img id="after-img" alt="The fixed design"></div></figure>
       </div>
       <div>
-        <p class="label">What we changed</p>
+        <p class="label" data-i18n="changed">What we changed</p>
         <ul class="changes" id="changes"></ul>
       </div>
       <div id="left-box">
-        <p class="label">Still needs your designer</p>
+        <p class="label" data-i18n="stillDesigner">Still needs your designer</p>
         <ul class="issues" id="left"></ul>
       </div>
       <div class="actions">
-        <button class="btn" id="download-btn" type="button">Download fixed PDF</button>
-        <button class="textbtn" id="order-btn-2" type="button">Go to the order page</button>
-        <button class="textbtn" id="again-btn-2" type="button">Check another file</button>
+        <button class="btn" id="download-btn" type="button" data-i18n="download">Download fixed PDF</button>
+        <button class="textbtn" id="order-btn-2" type="button" data-i18n="order">Go to the order page</button>
+        <button class="textbtn" id="again-btn-2" type="button" data-i18n="again">Check another file</button>
       </div>
       <p id="link-fallback" class="linkbox hidden"></p>
-      <p class="small muted">The fixed file is a print-ready image, so its text is no longer editable. The link works for 60 minutes. Ask Claude if you want to know more about any change.</p>
+      <p class="small muted" data-i18n="fixedNote">The fixed file is a print-ready image, so its text is no longer editable. The link works for 60 minutes. Ask Claude if you want to know more about any change.</p>
     </section>
   </main>
 
-  <footer>Unofficial prototype. Not affiliated with HelloPrint. · Files are deleted after 60 minutes.</footer>
+  <footer data-i18n="footer">Unofficial prototype. Not affiliated with HelloPrint. · Files are deleted after 60 minutes.</footer>
 </div>
 
 <script>/*__EXT_APPS_SDK__*/</script>
@@ -281,6 +281,108 @@
   var state = { products: [], product: "business-card", fileId: null, fileName: "", report: null,
                 beforeImg: null, downloadUrl: null };
 
+
+  // ------------------------------------------------------------ language (English / Dutch)
+
+  var I18N = {
+    en: {
+      step1: "Upload", step2: "Results", step3: "Fix", step4: "Order",
+      headline: "Is your design ready to print?", lead: "Upload it and we'll check it in about a second.",
+      drop: "Drop your file here", or: "or", choose: "choose a file", limits: "PDF, PNG or JPG · max {mb} MB",
+      samples: "No file at hand? Try a sample:", sMissing: "Missing bleed", sMistakes: "With mistakes", sReady: "Print-ready",
+      specs: "We check against: <b>{w} × {h} mm</b>, <b>{b} mm</b> bleed, text <b>{s} mm</b> from the edge, pictures <b>{d} dpi</b>.",
+      beta: "beta", betaSuffix: " (beta)", card: "Business cards",
+      cut: "Cut line", bleedLine: "Bleed reaches here", safe: "Keep text inside",
+      fix: "Fix automatically", order: "Go to the order page", again: "Check another file", download: "Download fixed PDF",
+      fixing: "Fixing your file…", checkedIn: "checked in", askClaude: "ask Claude about any point for more detail",
+      before: "Before", after: "After", changed: "What we changed", stillDesigner: "Still needs your designer",
+      fixedNote: "The fixed file is a print-ready image, so its text is no longer editable. The link works for 60 minutes. Ask Claude if you want to know more about any change.",
+      footer: "Unofficial prototype. Not affiliated with HelloPrint. · Files are deleted after 60 minutes.",
+      uploading: "Uploading {name}…", checking: "Checking your file…", loadingSample: "Loading the sample…",
+      titlePass: "Ready to print", titleWarn: "Almost ready", titleFail: "Needs a fix first",
+      textPass: "We found no problems for this product.", textWarn: "It can be printed, but please look at the points below.",
+      textFail: "Printed like this, it would likely not look right.",
+      cantTitle: "We can't check this file", cantText: "A person should look at it, or try another file.",
+      issuesOne: "1 thing to look at", issuesMany: "{n} things to look at",
+      allGood: "✓ Size, bleed, resolution, colours, fonts and text all look good.",
+      tagFix: "We can fix this for you", tagHuman: "Needs your designer",
+      fixedPass: "Fixed and ready to print", fixedWarn: "Fixed — a few things left", fixedFail: "Partly fixed",
+      fixedPassText: "Download the new file and use it for your order.",
+      fixedOtherText: "We fixed what is safe to fix. The rest needs a decision from you or your designer.",
+      copyLink: "Copy this link into your browser to download: ", sorry: "Sorry.",
+      errType: "This is not a PDF, PNG or JPG file. Please choose one of those.",
+      errSize: "This file is too large — the maximum is {mb} MB.", errEmpty: "This file is empty.",
+      errRead: "Could not read the file.", errConnect: "Could not connect to Claude. Please reload the chat.",
+      errOnlyClaude: "This panel only works inside Claude.", errGeneric: "Something went wrong."
+    },
+    nl: {
+      step1: "Uploaden", step2: "Resultaat", step3: "Herstellen", step4: "Bestellen",
+      headline: "Is je ontwerp klaar voor druk?", lead: "Upload het en we controleren het in ongeveer een seconde.",
+      drop: "Sleep je bestand hierheen", or: "of", choose: "kies een bestand", limits: "PDF, PNG of JPG · max. {mb} MB",
+      samples: "Geen bestand bij de hand? Probeer een voorbeeld:", sMissing: "Zonder afloop", sMistakes: "Met fouten", sReady: "Drukklaar",
+      specs: "We controleren op: <b>{w} × {h} mm</b>, <b>{b} mm</b> afloop, tekst <b>{s} mm</b> van de rand, afbeeldingen <b>{d} dpi</b>.",
+      beta: "bèta", betaSuffix: " (bèta)", card: "Visitekaartjes",
+      cut: "Snijlijn", bleedLine: "Afloop tot hier", safe: "Tekst binnen deze lijn",
+      fix: "Automatisch herstellen", order: "Naar de bestelpagina", again: "Ander bestand controleren", download: "Herstelde pdf downloaden",
+      fixing: "Je bestand wordt hersteld…", checkedIn: "gecontroleerd in", askClaude: "vraag Claude om meer uitleg over elk punt",
+      before: "Voor", after: "Na", changed: "Wat we hebben aangepast", stillDesigner: "Nog voor je ontwerper",
+      fixedNote: "Het herstelde bestand is een drukklare afbeelding, dus de tekst is niet meer bewerkbaar. De link werkt 60 minuten. Vraag Claude als je meer wilt weten over een aanpassing.",
+      footer: "Onofficieel prototype. Niet verbonden aan HelloPrint. · Bestanden worden na 60 minuten verwijderd.",
+      uploading: "{name} wordt geüpload…", checking: "Je bestand wordt gecontroleerd…", loadingSample: "Voorbeeld wordt geladen…",
+      titlePass: "Klaar voor druk", titleWarn: "Bijna klaar", titleFail: "Eerst herstellen",
+      textPass: "We vonden geen problemen voor dit product.", textWarn: "Het kan gedrukt worden, maar bekijk eerst de punten hieronder.",
+      textFail: "Zo gedrukt ziet het er waarschijnlijk niet goed uit.",
+      cantTitle: "We kunnen dit bestand niet controleren", cantText: "Laat iemand ernaar kijken, of probeer een ander bestand.",
+      issuesOne: "1 punt om naar te kijken", issuesMany: "{n} punten om naar te kijken",
+      allGood: "✓ Formaat, afloop, resolutie, kleuren, lettertypen en tekst zien er goed uit.",
+      tagFix: "Dit kunnen we voor je herstellen", tagHuman: "Vraag je ontwerper",
+      fixedPass: "Hersteld en klaar voor druk", fixedWarn: "Hersteld — nog een paar punten", fixedFail: "Deels hersteld",
+      fixedPassText: "Download het nieuwe bestand en gebruik het voor je bestelling.",
+      fixedOtherText: "We hebben hersteld wat veilig kan. De rest vraagt een beslissing van jou of je ontwerper.",
+      copyLink: "Kopieer deze link naar je browser om te downloaden: ", sorry: "Sorry.",
+      errType: "Dit is geen pdf-, png- of jpg-bestand. Kies een van die.",
+      errSize: "Dit bestand is te groot — het maximum is {mb} MB.", errEmpty: "Dit bestand is leeg.",
+      errRead: "Het bestand kon niet worden gelezen.", errConnect: "Kan geen verbinding maken met Claude. Laad de chat opnieuw.",
+      errOnlyClaude: "Dit paneel werkt alleen in Claude.", errGeneric: "Er ging iets mis."
+    }
+  };
+  // Server messages that can reach the customer, in Dutch (issue texts are translated on the server).
+  var SERVER_NL = [
+    [/no longer available/, "Dit bestand is niet meer beschikbaar (bestanden worden na 60 minuten verwijderd). Upload het opnieuw."],
+    [/busy/, "De demo is nu even druk. Probeer het over een paar minuten opnieuw."],
+    [/too large\. The maximum is (\d+) MB/, "Dit bestand is te groot. Het maximum is $1 MB."],
+    [/not a PDF, PNG or JPG/, "Dit is geen pdf-, png- of jpg-bestand. Upload een van die."],
+    [/part of the upload is missing/, "Een deel van de upload ontbreekt. Probeer het opnieuw."],
+    [/upload has expired/, "Deze upload is verlopen. Upload het bestand opnieuw."],
+    [/Nothing could be fixed automatically/, "Niets kon automatisch worden hersteld."]
+  ];
+  var lang = "en";
+
+  function t(key, vars) {
+    var text = (I18N[lang] && I18N[lang][key]) || I18N.en[key] || key;
+    Object.keys(vars || {}).forEach(function (k) { text = text.split("{" + k + "}").join(vars[k]); });
+    return text;
+  }
+
+  function translateServer(msg) {
+    if (lang !== "nl") return msg;
+    for (var i = 0; i < SERVER_NL.length; i++) {
+      var m = msg.match(SERVER_NL[i][0]);
+      if (m) return SERVER_NL[i][1].replace("$1", m[1] || "");
+    }
+    return msg;
+  }
+
+  function setLang(locale) {
+    var next = /^nl\b/i.test(locale || "") ? "nl" : "en";
+    document.documentElement.lang = next;
+    if (next === lang && document.body.dataset.langApplied) return;
+    lang = next;
+    document.body.dataset.langApplied = "1";
+    document.querySelectorAll("[data-i18n]").forEach(function (el) { el.textContent = t(el.dataset.i18n); });
+    if (state.products.length) setup(state.products, state.product, MAX_MB);
+  }
+
   var DEFAULT_PRODUCTS = [
     { product_id: "business-card", name: "Business cards, standard 85 x 55 mm", trim_mm: [85, 55], bleed_mm: 3, safe_margin_mm: 5, min_dpi: 300 },
     { product_id: "flyer-a5", name: "Flyer A5 (148 x 210 mm)", trim_mm: [148, 210], bleed_mm: 3, safe_margin_mm: 5, min_dpi: 300, beta: true },
@@ -293,6 +395,7 @@
 
   function applyTheme(ctx) {
     if (!ctx) return;
+    setLang(ctx.locale || navigator.language);
     if (ctx.theme === "dark" || ctx.theme === "light") document.documentElement.setAttribute("data-theme", ctx.theme);
     try { if (ctx.styles && ctx.styles.variables && SDK.applyHostStyleVariables) SDK.applyHostStyleVariables(ctx.styles.variables); } catch (e) {}
   }
@@ -308,16 +411,17 @@
     };
     app.onhostcontextchanged = applyTheme;
     app.connect().then(function () { applyTheme(app.getHostContext()); })
-      .catch(function () { showError("Could not connect to Claude. Please reload the chat."); });
+      .catch(function () { showError(t("errConnect")); });
   }
   setup(DEFAULT_PRODUCTS, "business-card", MAX_MB);
+  setLang(navigator.language);  // until Claude tells us the user's locale
 
   function cleanError(text) {
-    return String(text || "Something went wrong.").replace(/^Error executing tool \w+:\s*/, "");
+    return translateServer(String(text || t("errGeneric")).replace(/^Error executing tool \w+:\s*/, ""));
   }
 
   function callTool(name, args) {
-    if (!app) return Promise.reject(new Error("This panel only works inside Claude."));
+    if (!app) return Promise.reject(new Error(t("errOnlyClaude")));
     return app.callServerTool({ name: name, arguments: args }).then(function (r) {
       var text = (r.content || []).filter(function (c) { return c.type === "text"; }).map(function (c) { return c.text; });
       if (r.isError) throw new Error(cleanError(text[0]));
@@ -341,20 +445,21 @@
   // ------------------------------------------------------------ product + specs
 
   function shortName(p) {
-    return p.product_id === "business-card" ? "Business cards · 85 × 55 mm"
+    return p.product_id === "business-card" ? t("card") + " · 85 × 55 mm"
       : p.name.replace(/\s*\((\d+) x (\d+) mm\)/, " · $1 × $2 mm");
   }
 
   function setup(products, productId, maxMb) {
     state.products = products;
     if (productId) state.product = productId;
-    if (maxMb) { MAX_MB = maxMb; $("limits").textContent = "PDF, PNG or JPG · max " + maxMb + " MB"; }
+    if (maxMb) MAX_MB = maxMb;
+    $("limits").textContent = t("limits", { mb: MAX_MB });
     var sel = $("product");
     sel.innerHTML = "";
     products.forEach(function (p) {
       var o = document.createElement("option");
       o.value = p.product_id;
-      o.textContent = shortName(p) + (p.beta ? " (beta)" : "");
+      o.textContent = shortName(p) + (p.beta ? t("betaSuffix") : "");
       sel.appendChild(o);
     });
     sel.value = state.product;
@@ -367,9 +472,8 @@
 
   function renderSpecs() {
     var p = current();
-    $("specs").innerHTML = "We check against: <b>" + p.trim_mm[0] + " × " + p.trim_mm[1] + " mm</b>, <b>" +
-      p.bleed_mm + " mm</b> bleed, text <b>" + p.safe_margin_mm + " mm</b> from the edge, pictures <b>" +
-      p.min_dpi + " dpi</b>." + (p.beta ? '<span class="beta">beta</span>' : "");
+    $("specs").innerHTML = t("specs", { w: p.trim_mm[0], h: p.trim_mm[1], b: p.bleed_mm, s: p.safe_margin_mm,
+                                       d: p.min_dpi }) + (p.beta ? '<span class="beta">' + t("beta") + "</span>" : "");
   }
 
   $("product").addEventListener("change", function (e) {
@@ -410,7 +514,7 @@
   });
 
   function setStatus(text) { $("status").textContent = text || ""; }
-  function showError(text) { var el = $("error"); el.innerHTML = "<b>Sorry.</b> " + esc(text); el.classList.remove("hidden"); }
+  function showError(text) { var el = $("error"); el.innerHTML = "<b>" + t("sorry") + "</b> " + esc(text); el.classList.remove("hidden"); }
   function clearError() { $("error").classList.add("hidden"); }
   function setBusy(on, pct) {
     $("busy").classList.toggle("hidden", !on);
@@ -425,7 +529,7 @@
     return new Promise(function (resolve, reject) {
       var r = new FileReader();
       r.onload = function () { resolve(String(r.result).split(",")[1] || ""); };
-      r.onerror = function () { reject(new Error("Could not read the file.")); };
+      r.onerror = function () { reject(new Error(t("errRead"))); };
       r.readAsDataURL(blob);
     });
   }
@@ -440,16 +544,16 @@
   function handleFile(file) {
     clearError();
     var okType = /\.(pdf|png|jpe?g)$/i.test(file.name) || /^(application\/pdf|image\/(png|jpeg))$/.test(file.type);
-    if (!okType) { showError("This is not a PDF, PNG or JPG file. Please choose one of those."); return; }
-    if (file.size > MAX_MB * 1024 * 1024) { showError("This file is too large — the maximum is " + MAX_MB + " MB."); return; }
-    if (file.size === 0) { showError("This file is empty."); return; }
+    if (!okType) { showError(t("errType")); return; }
+    if (file.size > MAX_MB * 1024 * 1024) { showError(t("errSize", { mb: MAX_MB })); return; }
+    if (file.size === 0) { showError(t("errEmpty")); return; }
 
     state.fileName = file.name;
     $("results").classList.add("hidden");
     $("fixed").classList.add("hidden");
     step(1);
     setBusy(true, 0);
-    setStatus("Uploading " + file.name + "…");
+    setStatus(t("uploading", { name: file.name }));
 
     var uploadId = "", offset = 0;
     function next() {
@@ -487,7 +591,7 @@
       $("product").value = state.product;
       renderSpecs();
       setBusy(true, null);
-      setStatus("Loading the sample…");
+      setStatus(t("loadingSample"));
       callTool("load_sample", { sample: btn.dataset.sample }).then(function (res) {
         state.fileId = res.data.file_id;
         state.fileName = res.data.file_name;
@@ -503,19 +607,15 @@
   // ------------------------------------------------------------ check
 
   var ICON = { pass: "✓", warn: "!", fail: "✕" };
-  var TITLE = { pass: "Ready to print", warn: "Almost ready", fail: "Needs a fix first" };
-  var SENTENCE = {
-    pass: "We found no problems for this product.",
-    warn: "It can be printed, but please look at the points below.",
-    fail: "Printed like this, it would likely not look right."
-  };
+  var TITLE = { pass: "titlePass", warn: "titleWarn", fail: "titleFail" };
+  var SENTENCE = { pass: "textPass", warn: "textWarn", fail: "textFail" };
 
   function runCheck() {
     clearError();
     $("upload").classList.remove("hidden");
     setBusy(true, null);
-    setStatus("Checking your file…");
-    callTool("check_artwork", { file_id: state.fileId, product_id: state.product }).then(function (res) {
+    setStatus(t("checking"));
+    callTool("check_artwork", { file_id: state.fileId, product_id: state.product, lang: lang }).then(function (res) {
       setBusy(false);
       setStatus("");
       state.report = res.data;
@@ -529,7 +629,7 @@
   }
 
   function issueItem(i) {
-    var tag = i.fixable ? '<span class="tag fix">We can fix this for you</span>' : '<span class="tag human">Needs your designer</span>';
+    var tag = i.fixable ? '<span class="tag fix">' + t("tagFix") + "</span>" : '<span class="tag human">' + t("tagHuman") + "</span>";
     return '<li class="issue ' + esc(i.severity) + '"><span class="num" aria-label="Issue ' + i.n + '">' + i.n +
       "</span><div><p>" + esc(i.message) + "</p>" + tag + "</div></li>";
   }
@@ -543,17 +643,18 @@
   function showResults(r, img) {
     var cantOpen = (r.findings || []).some(function (f) { return f.check === "file" && f.severity === "error"; });
     showVerdict("results", r.verdict);
-    $("verdict-title").textContent = cantOpen ? "We can't check this file" : TITLE[r.verdict];
-    $("verdict-text").textContent = cantOpen ? "A person should look at it, or try another file." : SENTENCE[r.verdict];
+    $("verdict-title").textContent = t(cantOpen ? "cantTitle" : TITLE[r.verdict]);
+    $("verdict-text").textContent = t(cantOpen ? "cantText" : SENTENCE[r.verdict]);
     $("file-name").textContent = state.fileName;
-    $("seconds").textContent = (r.seconds < 0.1 ? r.seconds.toFixed(2) : r.seconds.toFixed(1)) + " s";
+    var secs = r.seconds < 0.01 ? "< 0.01" : (r.seconds < 0.1 ? r.seconds.toFixed(2) : r.seconds.toFixed(1));
+    $("seconds").textContent = (lang === "nl" ? secs.replace(".", ",") : secs) + " s";
     $("preview-box").classList.toggle("hidden", !img);
     if (img) $("preview").src = img;
     var issues = r.numbered_issues || [];
-    $("issues-label").textContent = issues.length === 1 ? "1 thing to look at" : issues.length + " things to look at";
+    $("issues-label").textContent = issues.length === 1 ? t("issuesOne") : t("issuesMany", { n: issues.length });
     $("issues-label").classList.toggle("hidden", !issues.length);
     $("issues").innerHTML = issues.length ? issues.map(issueItem).join("")
-      : '<li class="allgood">✓ Size, bleed, resolution, colours, fonts and text all look good.</li>';
+      : '<li class="allgood">' + t("allGood") + "</li>";
     var fixable = issues.some(function (i) { return i.fixable; });
     $("fix-btn").classList.toggle("hidden", !fixable || cantOpen);
     $("fix-error").classList.add("hidden");
@@ -570,7 +671,8 @@
       "\nfile_id=" + state.fileId + ", product_id=" + state.product +
       ". The customer sees all of this in the panel and can press \"Fix automatically\" there " +
       "(or you can call fix_artwork with these ids). Reply in one or two short sentences: the verdict and the " +
-      "next step. Offer more detail instead of listing everything.");
+      "next step. Offer more detail instead of listing everything." +
+      (lang === "nl" ? " The panel is shown in Dutch, so the customer probably prefers Dutch." : ""));
   }
 
   // ------------------------------------------------------------ fix
@@ -580,7 +682,7 @@
     btn.disabled = true;
     $("fix-busy").classList.remove("hidden");
     $("fix-error").classList.add("hidden");
-    callTool("fix_artwork", { file_id: state.fileId, product_id: state.product }).then(function (res) {
+    callTool("fix_artwork", { file_id: state.fileId, product_id: state.product, lang: lang }).then(function (res) {
       $("fix-busy").classList.add("hidden");
       btn.disabled = false;
       showFixed(res.data, res.image);
@@ -588,7 +690,7 @@
       $("fix-busy").classList.add("hidden");
       btn.disabled = false;
       var el = $("fix-error");
-      el.innerHTML = "<b>Sorry.</b> " + esc(e.message);
+      el.innerHTML = "<b>" + t("sorry") + "</b> " + esc(e.message);
       el.classList.remove("hidden");
     });
   });
@@ -596,16 +698,13 @@
   function showFixed(f, img) {
     var after = f.report_after || {};
     showVerdict("fixed", f.verdict_after);
-    $("fixed-title").textContent = f.verdict_after === "pass" ? "Fixed and ready to print"
-      : f.verdict_after === "warn" ? "Fixed — a few things left" : "Partly fixed";
-    $("fixed-text").textContent = f.verdict_after === "pass"
-      ? "Download the new file and use it for your order."
-      : "We fixed what is safe to fix. The rest needs a decision from you or your designer.";
+    $("fixed-title").textContent = t(f.verdict_after === "pass" ? "fixedPass" : f.verdict_after === "warn" ? "fixedWarn" : "fixedFail");
+    $("fixed-text").textContent = t(f.verdict_after === "pass" ? "fixedPassText" : "fixedOtherText");
     $("before-img").src = state.beforeImg || "";
     $("after-img").src = img || "";
-    $("changes").innerHTML = (f.changes || []).filter(function (c) { return !/no longer editable/.test(c); })
+    $("changes").innerHTML = (f.changes || []).filter(function (c) { return !/no longer editable|niet meer bewerkbaar/.test(c); })
       .map(function (c) {
-        c = c.replace(/^Page \d+: /, "").replace(/\s*\(colour-managed, no printer profile\)/, "")
+        c = c.replace(/^(Page|Pagina) \d+: /, "").replace(/\s*\(colour-managed, no printer profile\)/, "")
              .replace(/^converted to CMYK/, "converted colours to print colours (CMYK)");
         return "<li>" + esc(c.charAt(0).toUpperCase() + c.slice(1)) + "</li>";
       })
@@ -632,7 +731,7 @@
     openUrl(url).then(function (ok) {
       if (!ok) {
         var el = $("link-fallback");
-        el.textContent = "Copy this link into your browser to download: " + url;
+        el.textContent = t("copyLink") + url;
         el.classList.remove("hidden");
       }
     });
