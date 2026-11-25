@@ -184,6 +184,9 @@
   .linkbox { word-break: break-all; font-size: 13px; background: var(--soft); padding: 10px 12px; border-radius: 10px; }
 
   footer { margin-top: 28px; font-size: 12px; color: var(--muted); text-align: center; }
+  .footlink { background: none; border: 0; padding: 0; font: inherit; color: var(--muted); cursor: pointer;
+              text-decoration: underline; text-underline-offset: 2px; }
+  .footlink:hover { color: var(--text); }
 
   @media (max-width: 520px) {
     .wrap { padding: 18px 16px 12px; }
@@ -322,7 +325,9 @@
     </section>
   </main>
 
-  <footer data-i18n="footer">Prototype by Ammar Sodikov · Files are deleted after 60 minutes.</footer>
+  <footer><span data-i18n="footerBy">Prototype by Ammar Sodikov</span> ·
+    <button class="footlink" id="code-link" type="button" data-i18n="code">Code on GitHub</button> ·
+    <span data-i18n="footerFiles">Files are deleted after 60 minutes.</span></footer>
 </div>
 
 <script>/*__EXT_APPS_SDK__*/</script>
@@ -366,7 +371,7 @@
       fixing: "Fixing your file…", checkedIn: "checked in", askClaude: "ask Claude about any point for more detail",
       before: "Before", after: "After", changed: "What we changed", stillDesigner: "Still needs your designer",
       fixedNote: "The fixed file is a print-ready image, so its text is no longer editable. The link works for 60 minutes. Ask Claude if you want to know more about any change.",
-      footer: "Prototype by Ammar Sodikov · Files are deleted after 60 minutes.",
+      footerBy: "Prototype by Ammar Sodikov", code: "Code on GitHub", footerFiles: "Files are deleted after 60 minutes.",
       uploading: "Uploading {name}…", checking: "Checking your file…", loadingSample: "Loading the sample…",
       titlePass: "Ready to print", titleWarn: "Almost ready", titleFail: "Needs a fix first",
       textPass: "We found no problems for this product.", textWarn: "It can be printed, but please look at the points below.",
@@ -409,7 +414,7 @@
       fixing: "Je bestand wordt hersteld…", checkedIn: "gecontroleerd in", askClaude: "vraag Claude om meer uitleg over elk punt",
       before: "Voor", after: "Na", changed: "Wat we hebben aangepast", stillDesigner: "Nog voor je ontwerper",
       fixedNote: "Het herstelde bestand is een drukklare afbeelding, dus de tekst is niet meer bewerkbaar. De link werkt 60 minuten. Vraag Claude als je meer wilt weten over een aanpassing.",
-      footer: "Prototype van Ammar Sodikov · Bestanden worden na 60 minuten verwijderd.",
+      footerBy: "Prototype van Ammar Sodikov", code: "Code op GitHub", footerFiles: "Bestanden worden na 60 minuten verwijderd.",
       uploading: "{name} wordt geüpload…", checking: "Je bestand wordt gecontroleerd…", loadingSample: "Voorbeeld wordt geladen…",
       titlePass: "Klaar voor druk", titleWarn: "Bijna klaar", titleFail: "Eerst herstellen",
       textPass: "We vonden geen problemen voor dit product.", textWarn: "Het kan gedrukt worden, maar bekijk eerst de punten hieronder.",
@@ -439,6 +444,7 @@
     [/Nothing could be fixed automatically/, "Niets kon automatisch worden hersteld."]
   ];
   var lang = "en";
+  var CODE_URL = "https://github.com/ammaradolcevita/print-preflight-agent";
   var SAMPLE_LIST = /*__SAMPLES__*/[];   // filled by the server: id, product_id, thumbnail
 
   function renderTiles() {
@@ -980,6 +986,7 @@
   $("again-btn").addEventListener("click", again);
   $("again-btn-2").addEventListener("click", again);
   $("again-btn-3").addEventListener("click", again);
+  $("code-link").addEventListener("click", function () { openUrl(CODE_URL); });
 
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {

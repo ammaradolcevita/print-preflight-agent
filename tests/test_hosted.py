@@ -187,6 +187,7 @@ def test_studio_resource_is_self_contained(client):
     assert "export{" not in html  # the module export was turned into a global
     assert "<script src" not in html and "https://" not in html.split("<script>", 1)[0]  # no external loads
     assert "Prototype by Ammar Sodikov" in html
+    assert "https://github.com/ammaradolcevita/print-preflight-agent" in html  # "Code on GitHub" link
 
 
 def test_open_studio_returns_products(client):
