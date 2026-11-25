@@ -253,3 +253,11 @@ def test_upload_volume_and_disk_limits(client, card, fresh_limits, monkeypatch):
 def test_phone_fallback_is_explained(client):
     res = call(client, "open_preflight_studio", {})
     assert "mobile app" in res["structuredContent"]["note"]
+
+
+def test_open_studio_carries_the_order(client):
+    data = call(client, "open_preflight_studio", {"request": "I need 250 matte business cards"})["structuredContent"]
+    assert data["order"]["quantity"] == 250 and data["order"]["finish"] == "matte"
+    assert data["order"]["url"].startswith("https://www.helloprint.com/")
+    empty = call(client, "open_preflight_studio", {})["structuredContent"]["order"]
+    assert empty["quantity"] is None  # no request words: the panel shows the product only

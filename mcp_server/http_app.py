@@ -35,6 +35,7 @@ from mcp_server import limits, storage
 from mcp_server.common import INSTRUCTIONS, product_or_error, register_catalog_tools, report_payload
 from mcp_server.i18n import translate
 from preflight.fixes import fix_artwork as _fix
+from preflight.matcher import parse_request
 from preflight.preview import render_preview
 from preflight.report import check_after_fix, check_file
 from preflight.specs import get_product
@@ -127,16 +128,20 @@ apps.add_html_resource(
 
 
 @apps.tool(resource_uri=STUDIO_URI, title="Open Print Preflight", structured_output=True)
-def open_preflight_studio(product_id: str = "business-card") -> dict[str, Any]:
+def open_preflight_studio(product_id: str = "business-card", request: str = "") -> dict[str, Any]:
     """Open Print Preflight, an interactive panel in the chat where the customer uploads a print file
-    (PDF, PNG or JPG) and sees the check, an annotated preview and an automatic fix.
+    (PDF, PNG or JPG) and sees the check, an annotated preview, an automatic fix and an order summary.
 
     Use this whenever the customer wants to check or fix a design file: they cannot attach files to
     this tool any other way. Call find_product first if the product is unclear.
+    request: the customer's own words about the order, e.g. "250 matte business cards", so the panel can
+    show the quantity and finish in its order summary. Nothing is ordered: the customer continues on the shop.
     """
     p = product_or_error(product_id, HOSTED_PRODUCTS)
+    parsed = parse_request(request) if request else {}
     return {
         "product_id": p.id,
+        "order": {"quantity": parsed.get("quantity"), "finish": parsed.get("finish"), "url": p.url},
         "products": [
             {"product_id": q.id, "name": q.name, "trim_mm": list(q.trim_mm), "bleed_mm": q.spec.bleed_mm,
              "safe_margin_mm": q.spec.safe_warn_mm, "min_dpi": q.spec.dpi_min, "beta": q.id in BETA_PRODUCTS}
@@ -194,8 +199,9 @@ def load_sample(sample: str = "missing_bleed") -> dict[str, Any]:
 server = MCPServer(
     "print-preflight",
     instructions=INSTRUCTIONS + (
-        " Online demo: to check a customer's file, call open_preflight_studio; the customer uploads the file "
-        "in that panel and the results are shared with you. "
+        " Online demo: to check a customer's file, call open_preflight_studio (pass the customer's words about "
+        "the order as `request`, e.g. '250 matte business cards'); the customer uploads the file in that panel, "
+        "the results are shared with you, and the panel ends with an order summary. You never place orders. "
         f"Products: {', '.join(HOSTED_PRODUCTS)}. "
         "Style: the panel already shows the specs, the preview and every issue, so keep your chat replies "
         "short and friendly. After opening the panel, say in one sentence that they can upload their file "

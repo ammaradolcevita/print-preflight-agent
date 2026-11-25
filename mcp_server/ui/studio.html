@@ -137,6 +137,12 @@
   .tag { display: inline-block; margin-top: 4px; font-size: 12px; font-weight: 600; }
   .tag.fix { color: var(--accent); } .tag.human { color: var(--muted); }
   .allgood { background: var(--accent-soft); border-radius: 14px; padding: 12px 14px; }
+  .summary { border: 1px solid var(--line); border-radius: 18px; padding: 18px 20px; }
+  .summary .what { font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
+  .summary ul { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 6px; }
+  .summary li { padding-left: 26px; position: relative; }
+  .summary li::before { content: "✓"; position: absolute; left: 4px; color: var(--accent); font-weight: 800; }
+  .summary li.todo::before { content: "!"; color: var(--warn); }
 
   /* before / after */
   .ba { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -264,6 +270,27 @@
       <p id="link-fallback" class="linkbox hidden"></p>
       <p class="small muted" data-i18n="fixedNote">The fixed file is a print-ready image, so its text is no longer editable. The link works for 60 minutes. Ask Claude if you want to know more about any change.</p>
     </section>
+
+    <!-- 4. ready to order -->
+    <section id="ready" class="hidden" aria-labelledby="ready-title">
+      <div id="ready-verdict" class="verdict pass">
+        <div class="badge" id="ready-icon" aria-hidden="true">✓</div>
+        <div>
+          <h2 id="ready-title"></h2>
+          <p id="ready-text"></p>
+        </div>
+      </div>
+      <div class="summary">
+        <p class="what" id="ready-what"></p>
+        <ul id="ready-lines"></ul>
+      </div>
+      <div class="actions">
+        <button class="btn" id="go-btn" type="button" data-i18n="goShop">Continue to HelloPrint →</button>
+        <button class="textbtn" id="download-btn-3" type="button" data-i18n="download">Download fixed PDF</button>
+        <button class="textbtn" id="again-btn-3" type="button" data-i18n="again">Check another file</button>
+      </div>
+      <p class="small muted" data-i18n="readyNote">You place the order yourself on HelloPrint. Nothing is ordered automatically.</p>
+    </section>
   </main>
 
   <footer data-i18n="footer">Unofficial prototype. Not affiliated with HelloPrint. · Files are deleted after 60 minutes.</footer>
@@ -278,7 +305,7 @@
   var MAX_MB = 20;
   var $ = function (id) { return document.getElementById(id); };
 
-  var state = { products: [], product: "business-card", fileId: null, fileName: "", report: null,
+  var state = { products: [], product: "business-card", fileId: null, fileName: "", report: null, order: {}, fixed: null,
                 beforeImg: null, downloadUrl: null };
 
 
@@ -293,7 +320,15 @@
       specs: "We check against: <b>{w} × {h} mm</b>, <b>{b} mm</b> bleed, text <b>{s} mm</b> from the edge, pictures <b>{d} dpi</b>.",
       beta: "beta", betaSuffix: " (beta)", card: "Business cards",
       cut: "Cut line", bleedLine: "Bleed reaches here", safe: "Keep text inside",
-      fix: "Fix automatically", order: "Go to the order page", again: "Check another file", download: "Download fixed PDF",
+      fix: "Fix automatically", order: "Continue to order",
+      goShop: "Continue to HelloPrint →", readyNote: "You place the order yourself on HelloPrint. Nothing is ordered automatically.",
+      readyTitle: "Ready to order", readyAlmost: "Almost ready to order",
+      readyText: "Your file is print-ready. Continue on HelloPrint to choose the options and order.",
+      readyAlmostText: "You can continue, but some points below still need your designer first.",
+      lineChecked: "File checked against the print specs in {s}", lineFixed: "Fixed automatically: {what}",
+      linePdf: "Print-ready PDF ready to download", lineAsIs: "Your file is print-ready as it is",
+      lineLeft: "{n} point(s) still need your designer", fMatte: "matte", fGlossy: "glossy",
+      sBleed: "{mm} mm bleed added", sCmyk: "colours converted to CMYK", sScaled: "scaled to size", again: "Check another file", download: "Download fixed PDF",
       fixing: "Fixing your file…", checkedIn: "checked in", askClaude: "ask Claude about any point for more detail",
       before: "Before", after: "After", changed: "What we changed", stillDesigner: "Still needs your designer",
       fixedNote: "The fixed file is a print-ready image, so its text is no longer editable. The link works for 60 minutes. Ask Claude if you want to know more about any change.",
@@ -323,7 +358,15 @@
       specs: "We controleren op: <b>{w} × {h} mm</b>, <b>{b} mm</b> afloop, tekst <b>{s} mm</b> van de rand, afbeeldingen <b>{d} dpi</b>.",
       beta: "bèta", betaSuffix: " (bèta)", card: "Visitekaartjes",
       cut: "Snijlijn", bleedLine: "Afloop tot hier", safe: "Tekst binnen deze lijn",
-      fix: "Automatisch herstellen", order: "Naar de bestelpagina", again: "Ander bestand controleren", download: "Herstelde pdf downloaden",
+      fix: "Automatisch herstellen", order: "Verder naar bestellen",
+      goShop: "Verder naar HelloPrint →", readyNote: "Je bestelt zelf op HelloPrint. Er wordt niets automatisch besteld.",
+      readyTitle: "Klaar om te bestellen", readyAlmost: "Bijna klaar om te bestellen",
+      readyText: "Je bestand is drukklaar. Ga verder op HelloPrint om de opties te kiezen en te bestellen.",
+      readyAlmostText: "Je kunt verder, maar een paar punten hieronder vragen eerst je ontwerper.",
+      lineChecked: "Bestand gecontroleerd op de drukspecificaties in {s}", lineFixed: "Automatisch hersteld: {what}",
+      linePdf: "Drukklare pdf klaar om te downloaden", lineAsIs: "Je bestand is drukklaar zoals het is",
+      lineLeft: "{n} punt(en) nog voor je ontwerper", fMatte: "mat", fGlossy: "glanzend",
+      sBleed: "{mm} mm afloop toegevoegd", sCmyk: "kleuren omgezet naar CMYK", sScaled: "op maat geschaald", again: "Ander bestand controleren", download: "Herstelde pdf downloaden",
       fixing: "Je bestand wordt hersteld…", checkedIn: "gecontroleerd in", askClaude: "vraag Claude om meer uitleg over elk punt",
       before: "Voor", after: "Na", changed: "Wat we hebben aangepast", stillDesigner: "Nog voor je ontwerper",
       fixedNote: "Het herstelde bestand is een drukklare afbeelding, dus de tekst is niet meer bewerkbaar. De link werkt 60 minuten. Vraag Claude als je meer wilt weten over een aanpassing.",
@@ -407,6 +450,7 @@
         try { s = JSON.parse(((result && result.content) || []).find(function (c) { return c.type === "text"; }).text); }
         catch (e) { s = null; }
       }
+      if (s && s.order) state.order = s.order;
       if (s && s.products) setup(s.products, s.product_id, s.max_upload_mb);
     };
     app.onhostcontextchanged = applyTheme;
@@ -551,6 +595,7 @@
     state.fileName = file.name;
     $("results").classList.add("hidden");
     $("fixed").classList.add("hidden");
+    $("ready").classList.add("hidden");
     step(1);
     setBusy(true, 0);
     setStatus(t("uploading", { name: file.name }));
@@ -657,10 +702,15 @@
       : '<li class="allgood">' + t("allGood") + "</li>";
     var fixable = issues.some(function (i) { return i.fixable; });
     $("fix-btn").classList.toggle("hidden", !fixable || cantOpen);
+    state.fixed = null;
+    var orderPrimary = !fixable && !cantOpen;   // nothing to fix: the order step is the next step
+    $("order-btn").className = orderPrimary ? "btn" : "textbtn";
+    $("order-btn").classList.toggle("hidden", cantOpen);
     $("fix-error").classList.add("hidden");
     $("upload").classList.add("hidden");   // one step at a time
     $("results").classList.remove("hidden");
     $("fixed").classList.add("hidden");
+    $("ready").classList.add("hidden");
     step(2);
 
     var lines = issues.map(function (i) {
@@ -713,6 +763,7 @@
     $("left-box").classList.toggle("hidden", !left.length);
     $("left").innerHTML = left.map(issueItem).join("");
     state.downloadUrl = f.download_url;
+    state.fixed = f;
     $("link-fallback").classList.add("hidden");
     $("results").classList.add("hidden");
     $("fixed").classList.remove("hidden");
@@ -739,19 +790,73 @@
 
   // ------------------------------------------------------------ order page + restart
 
-  function goOrder() {
-    callTool("build_product_link", { product_id: state.product }).then(function (res) {
-      step(4);
-      return openUrl(res.data.url);
-    }).catch(function (e) { showError(e.message); });
+  function niceChanges(changes) {
+    return (changes || []).filter(function (c) { return !/no longer editable|niet meer bewerkbaar/.test(c); })
+      .map(function (c) {
+        return c.replace(/^(Page|Pagina) \d+: /, "").replace(/\s*\(colour-managed, no printer profile\)/, "")
+                .replace(/^converted to CMYK/, "converted colours to print colours (CMYK)").replace(/\.$/, "");
+      })
+      .filter(function (c, i, all) { return all.indexOf(c) === i; });
   }
-  $("order-btn").addEventListener("click", goOrder);
-  $("order-btn-2").addEventListener("click", goOrder);
+
+  function shortFixes(changes) {
+    // short wording for the order summary: "3 mm bleed added, colours converted to CMYK"
+    var out = [];
+    (changes || []).forEach(function (c) {
+      var mm = (c.match(/(\d+(?:[.,]\d+)?) mm (?:bleed|afloop)/) || [])[1];
+      var label = mm ? t("sBleed", { mm: mm }) : /CMYK/.test(c) ? t("sCmyk") : /scaled|geschaald/.test(c) ? t("sScaled") : null;
+      if (label && out.indexOf(label) < 0) out.push(label);
+    });
+    return out;
+  }
+
+  function finishLabel(f) {
+    if (!f) return "";
+    if (/^mat/i.test(f)) return t("fMatte");
+    if (/^gl/i.test(f)) return t("fGlossy");
+    return f;
+  }
+
+  function showReady() {
+    var r = state.report || {}, f = state.fixed, o = state.order || {};
+    var left = f ? ((f.report_after || {}).numbered_issues || []).length : (r.numbered_issues || []).length;
+    var printReady = f ? f.verdict_after === "pass" : r.verdict === "pass";
+    $("ready-verdict").className = "verdict " + (printReady ? "pass" : "warn");
+    $("ready-icon").textContent = printReady ? "✓" : "!";
+    $("ready-title").textContent = t(printReady ? "readyTitle" : "readyAlmost");
+    $("ready-text").textContent = t(printReady ? "readyText" : "readyAlmostText");
+    $("ready-what").textContent = (o.quantity ? o.quantity + " × " : "") + shortName(current()) +
+      (o.finish ? " · " + finishLabel(o.finish) : "");
+    var lines = ['<li>' + esc(t("lineChecked", { s: $("seconds").textContent })) + "</li>"];
+    if (f) lines.push("<li>" + esc(t("lineFixed", { what: shortFixes(f.changes).join(", ") })) + "</li>");
+    if (printReady) lines.push("<li>" + esc(t(f ? "linePdf" : "lineAsIs")) + "</li>");
+    if (left) lines.push('<li class="todo">' + esc(t("lineLeft", { n: left })) + "</li>");
+    $("ready-lines").innerHTML = lines.join("");
+    $("download-btn-3").classList.toggle("hidden", !f);
+    ["upload", "results", "fixed"].forEach(function (id) { $(id).classList.add("hidden"); });
+    $("ready").classList.remove("hidden");
+    step(4);
+    tellClaude("Print Preflight order summary: " + $("ready-what").textContent + ". File " +
+      (printReady ? "is print-ready" + (f ? " (fixed automatically)" : "") : "still has " + left + " point(s) for the designer") +
+      ". The customer continues on the shop page themselves; nothing is ordered. Reply in one short sentence.");
+  }
+
+  function goShop() {
+    var url = state.order && state.order.url;
+    var go = url ? Promise.resolve(url)
+      : callTool("build_product_link", { product_id: state.product }).then(function (res) { return res.data.url; });
+    go.then(openUrl).catch(function (e) { showError(e.message); });
+  }
+  $("order-btn").addEventListener("click", showReady);
+  $("order-btn-2").addEventListener("click", showReady);
+  $("go-btn").addEventListener("click", goShop);
+  $("download-btn-3").addEventListener("click", function () { $("download-btn").click(); });
 
   function again() {
     state.fileId = null;
     $("results").classList.add("hidden");
     $("fixed").classList.add("hidden");
+    $("ready").classList.add("hidden");
     $("upload").classList.remove("hidden");
     clearError();
     step(1);
@@ -759,6 +864,7 @@
   }
   $("again-btn").addEventListener("click", again);
   $("again-btn-2").addEventListener("click", again);
+  $("again-btn-3").addEventListener("click", again);
 
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
