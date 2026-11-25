@@ -223,7 +223,8 @@
       </div>
       <div id="fix-busy" class="hidden"><div class="progress busy"><div></div></div><p class="muted small" style="margin-top:8px">Fixing your file…</p></div>
       <div id="fix-error" class="alert hidden" role="alert"></div>
-      <p class="small muted"><span id="file-name"></span> · checked in <span id="seconds"></span></p>
+      <p class="small muted"><span id="file-name"></span> · checked in <span id="seconds"></span> ·
+        ask Claude about any point for more detail</p>
     </section>
 
     <!-- 3. fixed -->
@@ -253,7 +254,7 @@
         <button class="textbtn" id="again-btn-2" type="button">Check another file</button>
       </div>
       <p id="link-fallback" class="linkbox hidden"></p>
-      <p class="small muted">The fixed file is a print-ready image, so its text is no longer editable. The link works for 60 minutes.</p>
+      <p class="small muted">The fixed file is a print-ready image, so its text is no longer editable. The link works for 60 minutes. Ask Claude if you want to know more about any change.</p>
     </section>
   </main>
 
@@ -536,7 +537,9 @@
     tellClaude("Print Preflight checked \"" + state.fileName + "\" as " + current().name + ": " +
       r.verdict_text + " (" + r.verdict + ").\n" + (lines.length ? lines.join("\n") : "No problems found.") +
       "\nfile_id=" + state.fileId + ", product_id=" + state.product +
-      ". The customer can press \"Fix automatically\" in the panel, or you can call fix_artwork with these ids.");
+      ". The customer sees all of this in the panel and can press \"Fix automatically\" there " +
+      "(or you can call fix_artwork with these ids). Reply in one or two short sentences: the verdict and the " +
+      "next step. Offer more detail instead of listing everything.");
   }
 
   // ------------------------------------------------------------ fix
@@ -587,7 +590,9 @@
     tellClaude("Print Preflight fixed the file: " + f.verdict_before + " -> " + f.verdict_after + ".\nChanges: " +
       (f.changes || []).join(" ") + "\nStill needs the designer: " +
       (left.length ? left.map(function (i) { return i.message; }).join(" ") : "nothing") +
-      "\nDownload (60 minutes): " + f.download_url);
+      "\nDownload (60 minutes): " + f.download_url +
+      "\nThe customer sees the before/after and the download button in the panel. Reply in one or two short " +
+      "sentences; mention anything the designer still has to do.");
   }
 
   $("download-btn").addEventListener("click", function () {

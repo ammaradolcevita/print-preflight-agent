@@ -129,8 +129,8 @@ def open_preflight_studio(product_id: str = "business-card") -> dict[str, Any]:
             for q in map(get_product, HOSTED_PRODUCTS)
         ],
         "max_upload_mb": storage.MAX_BYTES // (1024 * 1024),
-        "note": "The panel is open. Ask the customer to upload their file in it; "
-                "results are shared with you when the check is done.",
+        "note": "The panel is open and already shows the specs. Reply in one short sentence asking the customer "
+                "to upload their file above (no spec table); the results are shared with you when the check is done.",
     }
 
 
@@ -167,7 +167,12 @@ server = MCPServer(
     instructions=INSTRUCTIONS + (
         " Online demo: to check a customer's file, call open_preflight_studio; the customer uploads the file "
         "in that panel and the results are shared with you. "
-        f"Products: {', '.join(HOSTED_PRODUCTS)}."
+        f"Products: {', '.join(HOSTED_PRODUCTS)}. "
+        "Style: the panel already shows the specs, the preview and every issue, so keep your chat replies "
+        "short and friendly. After opening the panel, say in one sentence that they can upload their file "
+        "above. After a check or a fix, give the verdict and the single most important next step in one or "
+        "two sentences, then offer to explain any point in more detail. No tables or spec lists unless the "
+        "customer asks for them."
     ),
     extensions=[apps],
 )

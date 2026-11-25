@@ -189,3 +189,11 @@ def test_open_studio_returns_products(client):
     assert data["product_id"] == "flyer-a6"
     assert [p["product_id"] for p in data["products"]] == list(http_app.HOSTED_PRODUCTS)
     assert res["content"][0]["type"] == "text"  # text fallback for hosts without MCP Apps
+
+
+def test_instructions_ask_for_short_replies(client):
+    init = rpc(client, "initialize", {"protocolVersion": "2025-06-18", "capabilities": {},
+                                      "clientInfo": {"name": "t", "version": "1"}})
+    text = init["instructions"]
+    assert "open_preflight_studio" in text and "keep your chat replies short" in text
+    assert "No tables" in text
