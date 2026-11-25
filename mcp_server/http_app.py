@@ -38,7 +38,7 @@ from mcp_server.common import INSTRUCTIONS, product_or_error, register_catalog_t
 from mcp_server.i18n import translate
 from preflight.fixes import fix_artwork as _fix
 from preflight.matcher import parse_request
-from preflight.preview import render_preview
+from preflight.preview import layout, render_preview
 from preflight.report import check_after_fix, check_file
 from preflight.specs import get_product
 
@@ -118,6 +118,34 @@ def _localised(payload: dict, lang: str) -> dict:
     for issue in payload["numbered_issues"]:
         issue["message"] = translate(issue["message"], lang)
     return payload
+
+
+def _interactive_preview(path, product, findings) -> tuple[Image | None, list[dict]]:
+    """A clean preview (guide lines, no numbers) and where each numbered marker goes, in % of the image.
+
+    The panel draws the markers itself, so hovering a number can highlight its issue (and back).
+    """
+    try:
+        canvas, markers, r = layout(path, product, findings)
+    except Exception:  # noqa: BLE001 - a preview is a bonus, never a reason to fail
+        log.exception("preview failed")
+        return None, []
+    w, h = canvas.size
+
+    def pct(v: float, total: float) -> float:
+        return round(v / total * 100, 3)
+
+    spots = [{
+        "n": m.n, "severity": m.finding.severity,
+        "x": pct(m.centre[0], w), "y": pct(m.centre[1], h),
+        "box": [pct(m.box[0], w), pct(m.box[1], h), pct(m.box[2] - m.box[0], w), pct(m.box[3] - m.box[1], h)]
+        if m.box else None,
+    } for m in markers]
+    if w > PREVIEW_PX * 1.4:
+        canvas = canvas.resize((int(PREVIEW_PX * 1.4), int(h * PREVIEW_PX * 1.4 / w)))
+    buf = io.BytesIO()
+    canvas.save(buf, "PNG", optimize=True)
+    return Image(data=buf.getvalue(), format="png"), spots
 
 
 def _preview(path, product, findings) -> Image | None:
@@ -233,12 +261,13 @@ register_catalog_tools(server, HOSTED_PRODUCTS)
 
 
 @server.tool()
-def check_artwork(file_id: str, product_id: str, lang: str = "en") -> list:
+def check_artwork(file_id: str, product_id: str, lang: str = "en", interactive: bool = False) -> list:
     """Check an uploaded print file (file_id from the Print Preflight panel) for a product.
 
     Returns the report (verdict + numbered issues in plain English) and an annotated preview image:
     black line = cut line, red dashed = where bleed must reach, green dashed = safe zone.
     lang: "en" (default) or "nl" for the issue texts shown in the panel.
+    interactive: used by the panel; returns a preview without numbers plus marker positions.
     """
     product = product_or_error(product_id, HOSTED_PRODUCTS)
     stored = _stored(file_id)
@@ -250,7 +279,10 @@ def check_artwork(file_id: str, product_id: str, lang: str = "en") -> list:
         payload["file_id"] = file_id
         out: list = [payload]
         if any(f.check != "file" for f in report.findings):
-            img = _preview(stored.path, product, report.findings)
+            if interactive:
+                img, payload["markers"] = _interactive_preview(stored.path, product, report.findings)
+            else:
+                img = _preview(stored.path, product, report.findings)
             if img:
                 out.append(img)
     log.info("check: %s -> %s in %.2fs", product.id, report.verdict, report.seconds)
@@ -258,7 +290,7 @@ def check_artwork(file_id: str, product_id: str, lang: str = "en") -> list:
 
 
 @server.tool()
-def fix_artwork(file_id: str, product_id: str, lang: str = "en") -> list:
+def fix_artwork(file_id: str, product_id: str, lang: str = "en", interactive: bool = False) -> list:
     """Automatically fix what is safe to fix (missing bleed, RGB colours, scale) and re-check.
 
     Returns what changed, what still needs the designer, the new verdict, a preview of the fixed file
@@ -280,7 +312,10 @@ def fix_artwork(file_id: str, product_id: str, lang: str = "en") -> list:
         after = check_after_fix(before, fixed.path)
         payload = _localised(report_payload(after), lang)
         payload["file"] = f"{fixed.display_name}.pdf"
-        img = _preview(fixed.path, product, after.findings)
+        if interactive:
+            img, payload["markers"] = _interactive_preview(fixed.path, product, after.findings)
+        else:
+            img = _preview(fixed.path, product, after.findings)
     log.info("fix: %s %s -> %s", product.id, before.verdict, after.verdict)
     out: list = [{
         "fixed_file_id": fixed.file_id,

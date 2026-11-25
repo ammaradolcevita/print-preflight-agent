@@ -272,3 +272,19 @@ def test_sample_picker_is_in_the_page(client):
     for sample_id in http_app.SAMPLES:
         assert f'"id": "{sample_id}"' in html
     assert html.count('"thumb": "data:image/png;base64,') == len(http_app.SAMPLES)
+
+
+def test_interactive_preview_has_markers(client):
+    loaded = call(client, "load_sample", {"sample": "with_mistakes"})["structuredContent"]
+    args = {"file_id": loaded["file_id"], "product_id": "business-card"}
+    plain = first_json(call(client, "check_artwork", args))
+    assert "markers" not in plain  # Claude gets the picture with the numbers burned in
+    res = call(client, "check_artwork", {**args, "interactive": True})
+    report = first_json(res)
+    numbers = {i["n"] for i in report["numbered_issues"]}
+    assert report["markers"] and {m["n"] for m in report["markers"]} <= numbers
+    for m in report["markers"]:
+        assert 0 <= m["x"] <= 100 and 0 <= m["y"] <= 100
+    assert res["content"][1]["type"] == "image"
+    fixed = first_json(call(client, "fix_artwork", {**args, "interactive": True}))
+    assert {m["n"] for m in fixed["report_after"]["markers"]} <= {i["n"] for i in fixed["report_after"]["numbered_issues"]}

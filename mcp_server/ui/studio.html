@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -129,6 +129,25 @@
 
   /* preview */
   .preview img { display: block; width: 100%; height: auto; border-radius: 14px; background: var(--soft); }
+  .stage { position: relative; }
+  .mk { position: absolute; transform: translate(-50%, -50%); width: 26px; height: 26px; border-radius: 50%; padding: 0;
+        border: 2px solid #fff; color: #fff; font-size: 12px; font-weight: 800; cursor: pointer; z-index: 2;
+        box-shadow: 0 2px 6px rgba(0,0,0,.3); transition: transform .15s ease, opacity .15s; }
+  .mk.error { background: #d62828; } .mk.warn { background: #e08a10; }
+  .mk.active { transform: translate(-50%, -50%) scale(1.25); z-index: 4; }
+  .box { position: absolute; border: 2px solid; border-radius: 3px; cursor: pointer; transition: all .15s; }
+  .box.error { border-color: #d62828; } .box.warn { border-color: #e08a10; }
+  .box.active { background: rgba(255,255,255,.22); box-shadow: 0 0 0 4px rgba(0,0,0,.18); }
+  .stage.dim .mk:not(.active), .stage.dim .box:not(.active) { opacity: .3; }
+  .ba .mk { width: 20px; height: 20px; font-size: 10px; border-width: 1.5px; }  /* small before/after images */
+  .tip { position: absolute; z-index: 6; max-width: min(300px, 80%); background: #15191a; color: #f3f5f4; font-size: 13px;
+         line-height: 1.45; padding: 10px 12px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.35);
+         pointer-events: none; opacity: 0; transform: translateY(4px); transition: opacity .12s, transform .12s; }
+  .tip.show { opacity: 1; transform: none; }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .issue { cursor: pointer; transition: box-shadow .15s, background .15s; border-left: 3px solid transparent; }
+  .issue.active.error { border-left-color: #d62828; } .issue.active.warn { border-left-color: #e08a10; }
+  .issue.active { box-shadow: 0 4px 14px rgba(0,0,0,.08); }
   .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 8px; font-size: 12px; color: var(--muted); }
   .legend i { display: inline-block; width: 18px; vertical-align: middle; margin-right: 6px; border-top: 2px solid; }
   .legend .cut { border-color: var(--text); }
@@ -232,8 +251,9 @@
         </div>
       </div>
       <div class="preview" id="preview-box">
-        <img id="preview" alt="Your design with the cut line, bleed and safe zone drawn on it">
+        <div class="stage" id="stage-check"><img id="preview" alt="Your design with the cut line, bleed and safe zone drawn on it"></div>
         <div class="legend"><span><i class="cut"></i><span data-i18n="cut">Cut line</span></span><span><i class="bleed"></i><span data-i18n="bleedLine">Bleed reaches here</span></span><span><i class="safe"></i><span data-i18n="safe">Keep text inside</span></span></div>
+        <p class="hint" id="hint-check" data-i18n="hintMarks">Point at a number to see the problem. Tap or click to keep it open.</p>
       </div>
       <div>
         <p class="label" id="issues-label">What we found</p>
@@ -260,8 +280,8 @@
         </div>
       </div>
       <div class="ba">
-        <figure><figcaption data-i18n="before">Before</figcaption><div class="preview"><img id="before-img" alt="Your original design"></div></figure>
-        <figure><figcaption data-i18n="after">After</figcaption><div class="preview"><img id="after-img" alt="The fixed design"></div></figure>
+        <figure><figcaption data-i18n="before">Before</figcaption><div class="preview"><div class="stage" id="stage-before"><img id="before-img" alt="Your original design"></div></div></figure>
+        <figure><figcaption data-i18n="after">After</figcaption><div class="preview"><div class="stage" id="stage-after"><img id="after-img" alt="The fixed design"></div></div></figure>
       </div>
       <div>
         <p class="label" data-i18n="changed">What we changed</p>
@@ -333,6 +353,7 @@
       specs: "We check against: <b>{w} × {h} mm</b>, <b>{b} mm</b> bleed, text <b>{s} mm</b> from the edge, pictures <b>{d} dpi</b>.",
       beta: "beta", betaSuffix: " (beta)", card: "Business cards",
       cut: "Cut line", bleedLine: "Bleed reaches here", safe: "Keep text inside",
+      hintMarks: "Point at a number to see the problem. Tap or click to keep it open.",
       fix: "Fix automatically", order: "Continue to order",
       goShop: "Continue to HelloPrint →", readyNote: "You place the order yourself on HelloPrint. Nothing is ordered automatically.",
       readyTitle: "Ready to order", readyAlmost: "Almost ready to order",
@@ -375,6 +396,7 @@
       specs: "We controleren op: <b>{w} × {h} mm</b>, <b>{b} mm</b> afloop, tekst <b>{s} mm</b> van de rand, afbeeldingen <b>{d} dpi</b>.",
       beta: "bèta", betaSuffix: " (bèta)", card: "Visitekaartjes",
       cut: "Snijlijn", bleedLine: "Afloop tot hier", safe: "Tekst binnen deze lijn",
+      hintMarks: "Wijs een nummer aan om het probleem te zien. Tik of klik om het open te houden.",
       fix: "Automatisch herstellen", order: "Verder naar bestellen",
       goShop: "Verder naar HelloPrint →", readyNote: "Je bestelt zelf op HelloPrint. Er wordt niets automatisch besteld.",
       readyTitle: "Klaar om te bestellen", readyAlmost: "Bijna klaar om te bestellen",
@@ -464,11 +486,16 @@
 
   var app = SDK.App ? new SDK.App({ name: "print-preflight-studio", version: "0.2.0" }, {}, { autoResize: true }) : null;
 
+  // The panel is always dark on purpose: in a light Claude chat it stands out as an app inside Claude.
+  // To follow the user's theme instead, set data-theme from ctx.theme here (see git history).
+  var ALWAYS_DARK = true;
+
   function applyTheme(ctx) {
     if (!ctx) return;
     setLang(ctx.locale || navigator.language);
-    if (ctx.theme === "dark" || ctx.theme === "light") document.documentElement.setAttribute("data-theme", ctx.theme);
-    try { if (ctx.styles && ctx.styles.variables && SDK.applyHostStyleVariables) SDK.applyHostStyleVariables(ctx.styles.variables); } catch (e) {}
+    if (!ALWAYS_DARK && (ctx.theme === "dark" || ctx.theme === "light")) {
+      document.documentElement.setAttribute("data-theme", ctx.theme);
+    }
   }
 
   if (app) {
@@ -690,7 +717,7 @@
     $("upload").classList.remove("hidden");
     setBusy(true, null);
     setStatus(t("checking"));
-    callTool("check_artwork", { file_id: state.fileId, product_id: state.product, lang: lang }).then(function (res) {
+    callTool("check_artwork", { file_id: state.fileId, product_id: state.product, lang: lang, interactive: true }).then(function (res) {
       setBusy(false);
       setStatus("");
       state.report = res.data;
@@ -705,8 +732,61 @@
 
   function issueItem(i) {
     var tag = i.fixable ? '<span class="tag fix">' + t("tagFix") + "</span>" : '<span class="tag human">' + t("tagHuman") + "</span>";
-    return '<li class="issue ' + esc(i.severity) + '"><span class="num" aria-label="Issue ' + i.n + '">' + i.n +
+    return '<li class="issue ' + esc(i.severity) + '" data-n="' + i.n + '"><span class="num" aria-label="Issue ' + i.n + '">' + i.n +
       "</span><div><p>" + esc(i.message) + "</p>" + tag + "</div></li>";
+  }
+
+  // ------------------------------------------------------------ interactive markers on the preview
+
+  function attachMarks(stage, marks, issues, list) {
+    stage.querySelectorAll(".mk, .box, .tip").forEach(function (el) { el.remove(); });
+    stage.classList.remove("dim");
+    if (!marks || !marks.length) return;
+    var byN = {};
+    (issues || []).forEach(function (i) { byN[i.n] = i; });
+    var html = "";
+    marks.slice().sort(function (a, b) { return (a.severity === "error") - (b.severity === "error"); })
+      .forEach(function (m) {
+        if (m.box) html += '<div class="box ' + esc(m.severity) + '" data-n="' + m.n + '" style="left:' + m.box[0] +
+          "%;top:" + m.box[1] + "%;width:" + m.box[2] + "%;height:" + m.box[3] + '%"></div>';
+      });
+    marks.forEach(function (m) {
+      var label = byN[m.n] ? byN[m.n].message : "";
+      html += '<button type="button" class="mk ' + esc(m.severity) + '" data-n="' + m.n + '" style="left:' + m.x +
+        "%;top:" + m.y + '%" aria-label="' + m.n + ": " + esc(label) + '">' + m.n + "</button>";
+    });
+    stage.insertAdjacentHTML("beforeend", html + '<div class="tip" role="tooltip"></div>');
+    var tip = stage.querySelector(".tip"), pinned = null;
+
+    function show(n) {
+      var all = [stage].concat(list ? [list] : []);
+      all.forEach(function (root) {
+        root.querySelectorAll("[data-n]").forEach(function (el) { el.classList.toggle("active", n !== null && el.dataset.n === String(n)); });
+      });
+      stage.classList.toggle("dim", n !== null);
+      var mk = n !== null && stage.querySelector('.mk[data-n="' + n + '"]');
+      if (!mk || !byN[n]) { tip.classList.remove("show"); return; }
+      tip.textContent = byN[n].message;
+      var sr = stage.getBoundingClientRect(), mr = mk.getBoundingClientRect();
+      tip.style.left = "0px"; tip.style.top = "0px"; tip.classList.add("show");
+      var x = mr.left - sr.left + mr.width / 2 + 12, y = mr.top - sr.top + mr.height / 2 + 12;
+      if (x + tip.offsetWidth > sr.width - 6) x = Math.max(6, sr.width - tip.offsetWidth - 6);
+      if (y + tip.offsetHeight > sr.height - 6) y = Math.max(6, mr.top - sr.top - tip.offsetHeight - 8);
+      tip.style.left = x + "px"; tip.style.top = y + "px";
+    }
+
+    function bind(el) {
+      var n = el.dataset.n;
+      el.addEventListener("mouseenter", function () { if (pinned === null) show(n); });
+      el.addEventListener("mouseleave", function () { if (pinned === null) show(null); });
+      el.addEventListener("focus", function () { if (pinned === null) show(n); });
+      el.addEventListener("blur", function () { if (pinned === null) show(null); });
+      el.addEventListener("click", function () { pinned = pinned === n ? null : n; show(pinned); });
+    }
+    stage.querySelectorAll(".mk, .box").forEach(bind);
+    if (list) list.querySelectorAll(".issue[data-n]").forEach(function (li) {
+      if (stage.querySelector('.mk[data-n="' + li.dataset.n + '"]')) bind(li);
+    });
   }
 
   function showVerdict(prefix, verdict) {
@@ -728,8 +808,11 @@
     var issues = r.numbered_issues || [];
     $("issues-label").textContent = issues.length === 1 ? t("issuesOne") : t("issuesMany", { n: issues.length });
     $("issues-label").classList.toggle("hidden", !issues.length);
+    state.marks = r.markers || [];
     $("issues").innerHTML = issues.length ? issues.map(issueItem).join("")
       : '<li class="allgood">' + t("allGood") + "</li>";
+    attachMarks($("stage-check"), state.marks, issues, $("issues"));
+    $("hint-check").classList.toggle("hidden", !state.marks.length);
     var fixable = issues.some(function (i) { return i.fixable; });
     $("fix-btn").classList.toggle("hidden", !fixable || cantOpen);
     state.fixed = null;
@@ -762,7 +845,7 @@
     btn.disabled = true;
     $("fix-busy").classList.remove("hidden");
     $("fix-error").classList.add("hidden");
-    callTool("fix_artwork", { file_id: state.fileId, product_id: state.product, lang: lang }).then(function (res) {
+    callTool("fix_artwork", { file_id: state.fileId, product_id: state.product, lang: lang, interactive: true }).then(function (res) {
       $("fix-busy").classList.add("hidden");
       btn.disabled = false;
       showFixed(res.data, res.image);
@@ -792,6 +875,8 @@
     var left = after.numbered_issues || [];
     $("left-box").classList.toggle("hidden", !left.length);
     $("left").innerHTML = left.map(issueItem).join("");
+    attachMarks($("stage-before"), state.marks, (state.report || {}).numbered_issues || [], null);
+    attachMarks($("stage-after"), after.markers || [], left, $("left"));
     state.downloadUrl = f.download_url;
     state.fixed = f;
     $("link-fallback").classList.add("hidden");
