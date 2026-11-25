@@ -122,3 +122,13 @@ def test_accepted_typo_corrections_are_applied_in_the_pdf(tmp_path):
     assert len(res.changes) == 2
     # the dark band and the logo are untouched by the redaction
     assert any(f.check == "dpi" for f in r.findings if f.severity == "error")
+
+
+def test_web_addresses_without_www_are_not_spell_checked(tmp_path):
+    texts = [{"text": "linkedin.com/in/janedoe", "at_mm": (12, 30)},
+             {"text": "github.com/janedoe · studio.nl", "at_mm": (12, 36)},
+             {"text": "grafic design", "at_mm": (12, 42)}]
+    r = check_file(card(tmp_path, texts), "business-card")
+    words = {f.detail.get("word") for f in findings(r, "text")}
+    assert not words & {"linkedin", "janedoe", "github", "studio"}
+    assert "grafic" in words  # a real typo next to them is still caught

@@ -26,6 +26,8 @@ EMAIL_OK = re.compile(r"^[\w.+-]+@[\w-]+(\.[\w-]+)*\.[A-Za-z]{2,}$")
 URL_OK = re.compile(r"^(https?://)?(www\.)?[\w-]+(\.[\w-]+)*\.[A-Za-z]{2,}(/\S*)?$")
 PHONE_LIKE = re.compile(r"(?<![\w@])\+?\(?\d[\d\s\-().]{6,}\d")
 WORD = re.compile(r"[A-Za-zÀ-ÿ]+(?:'[A-Za-z]+)?")
+# A web address without www: "linkedin.com/in/name", "github.com/name", "studio.nl". Not spell-checked.
+DOMAIN_LIKE = re.compile(r"[\w-]+\.[A-Za-z]{2,}(?:[/:]|$)")
 MAX_TYPOS = 5
 
 
@@ -116,7 +118,8 @@ def check(ctx: Context) -> list[Finding]:
                 f = _contact_findings(token, pno, span.bbox_mm)
                 if f:
                     contact.append(f)
-                if "@" in token or "www" in token.lower() or "://" in token or any(c.isdigit() for c in token):
+                if ("@" in token or "www" in token.lower() or "://" in token or "/" in token
+                        or DOMAIN_LIKE.search(token.strip(".,;:!?()")) or any(c.isdigit() for c in token)):
                     continue
                 for w in WORD.findall(token):
                     if len(w) < 4 or not w.islower():
