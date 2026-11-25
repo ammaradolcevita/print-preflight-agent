@@ -186,7 +186,7 @@ def test_studio_resource_is_self_contained(client):
     assert "globalThis.McpExtApps=" in html and "/*__EXT_APPS_SDK__*/" not in html
     assert "export{" not in html  # the module export was turned into a global
     assert "<script src" not in html and "https://" not in html.split("<script>", 1)[0]  # no external loads
-    assert "Not affiliated with HelloPrint" in html
+    assert "Prototype by Ammar Sodikov" in html
 
 
 def test_open_studio_returns_products(client):
